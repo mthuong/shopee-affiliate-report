@@ -38,11 +38,16 @@ async function loadBitmap(file: File): Promise<{ width: number; height: number; 
   // Fallback: HTMLImageElement via object URL
   const url = URL.createObjectURL(file)
   const img = new Image()
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve()
-    img.onerror = () => reject(new Error('Failed to load image for cropping'))
-    img.src = url
-  })
+  try {
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve()
+      img.onerror = () => reject(new Error('Failed to load image for cropping'))
+      img.src = url
+    })
+  } catch (e) {
+    URL.revokeObjectURL(url)
+    throw e
+  }
   return {
     width: img.naturalWidth,
     height: img.naturalHeight,
@@ -70,15 +75,16 @@ async function canvasToBlob(
   })
 }
 
-async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer()
-  let binary = ''
-  const bytes = new Uint8Array(buffer)
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  return btoa(binary)
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      resolve(result.slice(result.indexOf(',') + 1))
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('Failed to read blob'))
+    reader.readAsDataURL(blob)
+  })
 }
 
 export async function cropFileToBase64(
@@ -114,13 +120,5 @@ export async function cropFileToBase64(
 }
 
 export async function readFileAsCropped(file: File): Promise<{ base64: string; mimeType: string }> {
-  // "Use full image" path: read original bytes without canvas re-encoding.
-  const buffer = await file.arrayBuffer()
-  let binary = ''
-  const bytes = new Uint8Array(buffer)
-  const chunk = 0x8000
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
-  }
-  return { base64: btoa(binary), mimeType: file.type || 'image/jpeg' }
+  return { base64: await blobToBase64(file), mimeType: file.type || 'image/jpeg' }
 }
