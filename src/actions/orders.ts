@@ -88,14 +88,20 @@ export async function updateOrder(
 ): Promise<Order> {
   const supabase = await createClient()
 
-  // Ensure report_clients row exists when assigning a client
-  if (updates.client_id && updates.report_id) {
-    await supabase
-      .from('report_clients')
-      .upsert(
-        { report_id: updates.report_id, client_id: updates.client_id, commission_percent: 50 },
-        { onConflict: 'report_id,client_id', ignoreDuplicates: true }
-      )
+  // Ensure report_clients row exists when assigning a client.
+  // Fetch the existing order's report_id in case caller didn't supply it.
+  if (updates.client_id) {
+    const reportId =
+      updates.report_id ??
+      (await supabase.from('orders').select('report_id').eq('id', id).single()).data?.report_id
+    if (reportId) {
+      await supabase
+        .from('report_clients')
+        .upsert(
+          { report_id: reportId, client_id: updates.client_id, commission_percent: 50 },
+          { onConflict: 'report_id,client_id', ignoreDuplicates: true }
+        )
+    }
   }
 
   const { data, error } = await supabase
