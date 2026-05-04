@@ -107,7 +107,7 @@ export type QueueItem = {
 1. Files arrive (in `ReportDetailClient`) → each becomes a `needs-crop` item.
 2. Hybrid auto-open: when at least one item is `needs-crop` and no cropper modal is currently open, `UploadQueue` auto-targets the first `needs-crop` item and renders `<ImageCropper>` for it. After confirm or use-full-image, the item flips to `queued` with `cropped` populated; the modal advances to the next `needs-crop` item if any.
 3. If the user closes the modal mid-batch, the targeted item stays `needs-crop` and the modal does **not** re-open until the user explicitly clicks the row's **Crop** button or adds more files.
-4. Worker `useEffect` (existing) only picks items with `status === 'queued'`. It reads `item.cropped` (always populated on `queued` — by either `onConfirm` or `onUseFullImage`) and passes it to `parseImage`.
+4. Worker `useEffect` (existing) only picks items with `status === 'queued'`. With the flag on, `item.cropped` is populated by the cropper's `onConfirm` / `onUseFullImage`. With the flag off, `item.cropped` is undefined and the worker falls back to reading `item.file` directly via its inline `readFileAsBase64` helper. The chosen bytes are passed to `parseImage`.
 
 **Removal:** `onRemove` works in any pre-`done` state (including `needs-crop`). Both `previewUrl` and `croppedPreviewUrl` (if present) get `URL.revokeObjectURL` on remove/clear.
 
@@ -232,7 +232,7 @@ typeof o.order_id === 'string'
   - Per-row **Crop** button while status is `needs-crop`.
   - `StatusBadge`: new branch `needs-crop → "✂ Needs crop"`.
 - `src/app/reports/[id]/ReportDetailClient.tsx`
-  - Initial status of newly-added files: `'needs-crop'` if `CROP_CONFIRM_ENABLED`, else `'queued'` with `cropped` set from the file's bytes (pre-feature behavior).
+  - Initial status of newly-added files: `'needs-crop'` if `CROP_CONFIRM_ENABLED`, else `'queued'` (no `cropped` field — the worker's fallback reads the original file, matching pre-feature behavior).
   - Revoke `croppedPreviewUrl` alongside `previewUrl` on remove/clear.
 - `src/lib/gemini/parse-images.ts`
   - `buildGeminiPrompt` rewrite.

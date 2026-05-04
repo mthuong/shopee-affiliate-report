@@ -113,9 +113,11 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
     const id = next.id
     ;(async () => {
       try {
-        // Cropped bytes are populated by the ImageCropper. When the cropping
-        // flow is disabled (flag off), the item lands in 'queued' without
-        // cropped bytes — fall back to reading the original file directly.
+        // Cropped bytes are populated by the ImageCropper on confirm or
+        // use-full-image. When CROP_CONFIRM_ENABLED is false,
+        // ReportDetailClient pushes items straight to 'queued' without cropped
+        // bytes; this fallback reads the original file. Do not remove — it is
+        // the load-bearing flag-off code path, not defensive cleanup.
         const cropped: { base64: string; mimeType: string } =
           next.cropped ?? (await readFileAsBase64(next.file))
         while (true) {
