@@ -1,9 +1,10 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getClient, getClients } from '@/actions/clients'
 import { getOrdersByClient, getOrderStatuses } from '@/actions/orders'
 import { getReportClient } from '@/actions/report-clients'
 import { getReport } from '@/actions/reports'
-import { calcTotalReturn } from '@/lib/utils/commission'
+import { calcTotalReturn, COMPLETED_STATUS_ID, DEFAULT_COMMISSION_PERCENT } from '@/lib/utils/commission'
 import { ClientDetailClient } from './ClientDetailClient'
 import type { Report, OrderWithStatus } from '@/lib/supabase/types'
 
@@ -39,7 +40,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       return {
         report,
         orders: orders.filter((o) => o.reports?.id === reportId),
-        commissionPercent: rc?.commission_percent ?? 50,
+        commissionPercent: rc?.commission_percent ?? DEFAULT_COMMISSION_PERCENT,
       }
     })
   )
@@ -48,14 +49,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     .sort((a, b) => new Date(b.report.created_at).getTime() - new Date(a.report.created_at).getTime())
 
   const totalCommission = orders
-    .filter((o) => o.order_statuses.name === 'Đã hoàn thành')
+    .filter((o) => o.status_id === COMPLETED_STATUS_ID)
     .reduce((sum, o) => sum + o.commission, 0)
-  const totalReturn = reportGroups.reduce((sum, g) => sum + calcTotalReturn(g.orders.filter((o) => o.order_statuses.name === 'Đã hoàn thành'), g.commissionPercent), 0)
+  const totalReturn = reportGroups.reduce((sum, g) => sum + calcTotalReturn(g.orders.filter((o) => o.status_id === COMPLETED_STATUS_ID), g.commissionPercent), 0)
   const allClients = allClientsData.map(({ id, name, created_at }) => ({ id, name, created_at }))
 
   return (
     <div>
-      <a href="/clients" className="text-gray-500 hover:text-gray-300 text-sm mb-6 inline-block">← Clients</a>
+      <Link href="/clients" className="text-gray-500 hover:text-gray-300 text-sm mb-6 inline-block">← Clients</Link>
       <ClientDetailClient client={client} reportGroups={reportGroups} statuses={statuses} allClients={allClients} totalCommission={totalCommission} totalReturn={totalReturn} />
     </div>
   )

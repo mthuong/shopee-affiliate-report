@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { updateCommissionPercent } from '@/actions/report-clients'
 import { deleteOrder } from '@/actions/orders'
 import { useToast } from '@/components/ui/Toast'
@@ -8,7 +9,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { OrderModal } from '@/components/orders/OrderModal'
 import { formatVND } from '@/lib/utils/currency'
 import { formatOrderDate } from '@/lib/utils/date'
-import { calcReturn, calcSubtotal, calcTotalReturn } from '@/lib/utils/commission'
+import { calcReturn, calcSubtotal, calcTotalReturn, COMPLETED_STATUS_ID } from '@/lib/utils/commission'
 import { exportToExcel } from '@/lib/excel/export'
 import type { OrderWithStatus, OrderStatus, Client, Report } from '@/lib/supabase/types'
 
@@ -23,6 +24,7 @@ type Props = {
 
 export function ClientMonthSection({ report, client, initialOrders, initialPercent, statuses, allClients }: Props) {
   const { showToast } = useToast()
+  const router = useRouter()
   const [orders, setOrders] = useState(initialOrders)
   const [percent, setPercent] = useState(initialPercent)
   const [percentInput, setPercentInput] = useState(String(initialPercent))
@@ -33,7 +35,7 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
   const [showAddModal, setShowAddModal] = useState(false)
 
   const subtotal = calcSubtotal(orders)
-  const totalReturn = calcTotalReturn(orders.filter((o) => o.order_statuses.name === 'Đã hoàn thành'), percent)
+  const totalReturn = calcTotalReturn(orders.filter((o) => o.status_id === COMPLETED_STATUS_ID), percent)
 
   async function handleSavePercent() {
     const val = Math.min(100, Math.max(0, parseInt(percentInput, 10) || 0))
@@ -56,6 +58,7 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
     try {
       await deleteOrder(deleteTarget.id, report.id)
       setOrders((prev) => prev.filter((o) => o.id !== deleteTarget.id))
+      router.refresh()
       showToast('Order deleted')
     } catch {
       showToast('Failed to delete', 'error')
@@ -67,7 +70,7 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
 
   function handleExport() {
     const rows = orders.map((o) => {
-      const isCompleted = o.order_statuses.name === 'Đã hoàn thành'
+      const isCompleted = o.status_id === COMPLETED_STATUS_ID
       return {
         order_id: o.order_id,
         product_name: o.product_name,
@@ -115,7 +118,7 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
                   <td className="py-3 pr-4 text-white font-mono text-xs">{o.order_id}</td>
                   <td className="py-3 pr-4 text-gray-300 max-w-[160px] truncate">{o.product_name ?? '—'}</td>
                   <td className="py-3 pr-4 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
-                  <td className={`py-3 pr-4 text-xs ${o.order_statuses.name === 'Đã hoàn thành' ? 'text-green-400' : 'text-red-400'}`}>{o.order_statuses.name}</td>
+                  <td className={`py-3 pr-4 text-xs ${o.status_id === COMPLETED_STATUS_ID ? 'text-green-400' : 'text-red-400'}`}>{o.order_statuses.name}</td>
                   <td className="py-3 pr-4 text-right text-white">{formatVND(o.commission)}</td>
                   <td className="py-3 text-center">
                     <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(o) }} className="invisible group-hover:visible text-red-400 hover:text-red-300 p-1">🗑</button>
@@ -139,8 +142,19 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
         </div>
       </div>
 
-      {editOrder && <OrderModal open onClose={() => setEditOrder(null)} onSaved={(updated) => { setOrders((prev) => prev.map((o) => o.id === updated.id ? updated : o)); setEditOrder(null) }} reportId={report.id} statuses={statuses} clients={allClients} order={editOrder} />}
-      <OrderModal open={showAddModal} onClose={() => setShowAddModal(false)} onSaved={(newOrder) => setOrders((prev) => [...prev, newOrder])} reportId={report.id} statuses={statuses} clients={allClients} />
+      {editOrder && <OrderModal open onClose={() => setEditOrder(null)} onSaved={(updated) => {
+        setOrders((prev) =>
+          updated.client_id === client.id
+            ? prev.map((o) => (o.id === updated.id ? updated : o))
+            : prev.filter((o) => o.id !== updated.id)
+        )
+        setEditOrder(null)
+        router.refresh()
+      }} reportId={report.id} statuses={statuses} clients={allClients} order={editOrder} />}
+      <OrderModal open={showAddModal} onClose={() => setShowAddModal(false)} onSaved={(newOrder) => {
+        if (newOrder.client_id === client.id) setOrders((prev) => [...prev, newOrder])
+        router.refresh()
+      }} reportId={report.id} statuses={statuses} clients={allClients} />
       <ConfirmModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} loading={deleting} title="Delete Order?"
         message={<>Order <strong className="text-white font-mono">{deleteTarget?.order_id}</strong> will be permanently deleted.</>} />
     </>

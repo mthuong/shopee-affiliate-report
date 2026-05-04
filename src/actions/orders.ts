@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { DEFAULT_COMMISSION_PERCENT } from '@/lib/utils/commission'
 import type { Order, OrderWithStatus } from '@/lib/supabase/types'
 
 export async function getOrdersByReport(reportId: string): Promise<OrderWithStatus[]> {
@@ -49,7 +50,7 @@ export async function createOrder(
     await supabase
       .from('report_clients')
       .upsert(
-        { report_id: order.report_id, client_id: order.client_id, commission_percent: 50 },
+        { report_id: order.report_id, client_id: order.client_id, commission_percent: DEFAULT_COMMISSION_PERCENT },
         { onConflict: 'report_id,client_id', ignoreDuplicates: true }
       )
   }
@@ -98,7 +99,7 @@ export async function updateOrder(
       await supabase
         .from('report_clients')
         .upsert(
-          { report_id: reportId, client_id: updates.client_id, commission_percent: 50 },
+          { report_id: reportId, client_id: updates.client_id, commission_percent: DEFAULT_COMMISSION_PERCENT },
           { onConflict: 'report_id,client_id', ignoreDuplicates: true }
         )
     }

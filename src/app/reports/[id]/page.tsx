@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getReport } from '@/actions/reports'
 import { getOrdersByReport, getOrderStatuses } from '@/actions/orders'
@@ -21,7 +22,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <a href="/" className="text-gray-500 hover:text-gray-300 text-sm">← Reports</a>
+        <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">← Reports</Link>
         <span className="text-gray-700">/</span>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">{report.name}</h1>

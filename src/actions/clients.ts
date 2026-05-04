@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient as createSupabaseClient } from '@/lib/supabase/server'
-import { calcReturn } from '@/lib/utils/commission'
+import { calcReturn, COMPLETED_STATUS_ID, DEFAULT_COMMISSION_PERCENT } from '@/lib/utils/commission'
 import type { Client, ClientWithTotals } from '@/lib/supabase/types'
 
 export async function getClients(): Promise<ClientWithTotals[]> {
@@ -16,7 +16,7 @@ export async function getClients(): Promise<ClientWithTotals[]> {
 
   return (data ?? []).map((c) => {
     const completedOrders = (c.orders ?? []).filter(
-      (o: { status_id: number }) => o.status_id === 1
+      (o: { status_id: number }) => o.status_id === COMPLETED_STATUS_ID
     )
     const totalCommission = completedOrders.reduce(
       (sum: number, o: { commission: number }) => sum + o.commission,
@@ -27,7 +27,7 @@ export async function getClients(): Promise<ClientWithTotals[]> {
         const rc = (c.report_clients ?? []).find(
           (r: { report_id: string }) => r.report_id === o.report_id
         )
-        return sum + calcReturn(o.commission, rc?.commission_percent ?? 50)
+        return sum + calcReturn(o.commission, rc?.commission_percent ?? DEFAULT_COMMISSION_PERCENT)
       },
       0
     )

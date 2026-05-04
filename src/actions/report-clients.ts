@@ -9,14 +9,15 @@ export async function getReportClient(
   clientId: string
 ): Promise<ReportClient | null> {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('report_clients')
     .select('*')
     .eq('report_id', reportId)
     .eq('client_id', clientId)
-    .single()
+    .maybeSingle()
 
-  return data ?? null
+  if (error) throw error
+  return data
 }
 
 export async function updateCommissionPercent(
