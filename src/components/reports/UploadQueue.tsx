@@ -4,7 +4,11 @@ import { useEffect, useRef } from 'react'
 import { parseImage } from '@/actions/parse'
 import type { ParsedOrder } from '@/lib/supabase/types'
 
-export type QueueStatus = 'queued' | 'parsing' | 'done' | 'failed'
+// Gemini 2.5 Flash free tier peaks at 5 requests/min. 13s spacing keeps any
+// rolling 60s window at ≤5 calls with a small safety margin.
+const RATE_LIMIT_INTERVAL_MS = 13000
+
+export type QueueStatus = 'queued' | 'throttled' | 'parsing' | 'done' | 'failed'
 
 export type QueueItem = {
   id: string
@@ -37,6 +41,7 @@ function readFileAsBase64(file: File): Promise<{ base64: string; mimeType: strin
 
 export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }: Props) {
   const inFlight = useRef(false)
+  const lastCallAtRef = useRef<number>(0)
 
   useEffect(() => {
     if (inFlight.current) return
@@ -46,9 +51,15 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
     inFlight.current = true
     const id = next.id
     const file = next.file
-    onUpdate(id, { status: 'parsing' })
     ;(async () => {
       try {
+        const waitMs = Math.max(0, RATE_LIMIT_INTERVAL_MS - (Date.now() - lastCallAtRef.current))
+        if (waitMs > 0) {
+          onUpdate(id, { status: 'throttled' })
+          await new Promise((r) => setTimeout(r, waitMs))
+        }
+        lastCallAtRef.current = Date.now()
+        onUpdate(id, { status: 'parsing' })
         const image = await readFileAsBase64(file)
         const { orders, error } = await parseImage(image)
         if (error) {
@@ -72,18 +83,18 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
 
   const failedCount = items.filter((i) => i.status === 'failed').length
   const doneCount = items.filter((i) => i.status === 'done').length
-  const parsingCount = items.filter((i) => i.status === 'parsing').length
-  const queuedCount = items.filter((i) => i.status === 'queued').length
-  const allDone = parsingCount === 0 && queuedCount === 0
+  const activeCount = items.filter((i) => i.status === 'parsing' || i.status === 'throttled' || i.status === 'queued').length
+  const allDone = activeCount === 0
 
   return (
     <div className="mt-4 border border-gray-800 rounded-xl p-4">
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
         <h3 className="font-semibold text-gray-200 text-sm">
-          Upload queue — {doneCount} parsed{failedCount > 0 ? `, ${failedCount} failed` : ''}{!allDone ? `, ${parsingCount + queuedCount} pending` : ''}
+          Upload queue — {doneCount} parsed{failedCount > 0 ? `, ${failedCount} failed` : ''}{!allDone ? `, ${activeCount} pending` : ''}
         </h3>
         <button onClick={onClearAll} className="text-xs text-gray-500 hover:text-gray-300">Clear all</button>
       </div>
+      <p className="text-[11px] text-gray-500 mb-3">Throttled to 5 requests/min (Gemini free tier)</p>
       <div className="space-y-2">
         {items.map((item) => (
           <QueueRow key={item.id} item={item} onRetry={() => onUpdate(item.id, { status: 'queued', error: null })} onRemove={() => onRemove(item.id)} />
@@ -110,7 +121,7 @@ function QueueRow({ item, onRetry, onRemove }: { item: QueueItem; onRetry: () =>
         {item.status === 'failed' && (
           <button onClick={onRetry} className="text-xs text-orange-400 hover:text-orange-300 px-2 py-1 rounded">Retry</button>
         )}
-        {item.status !== 'parsing' && (
+        {item.status !== 'parsing' && item.status !== 'throttled' && (
           <button onClick={onRemove} className="text-xs text-gray-500 hover:text-red-400 px-2 py-1" title="Remove">✕</button>
         )}
       </div>
@@ -122,6 +133,8 @@ function StatusBadge({ item }: { item: QueueItem }) {
   switch (item.status) {
     case 'queued':
       return <span className="text-xs text-gray-500">⏳ Queued</span>
+    case 'throttled':
+      return <span className="text-xs text-gray-400 animate-pulse" title="Waiting for rate limit">⏱ Waiting…</span>
     case 'parsing':
       return <span className="text-xs text-orange-400 animate-pulse">⚡ Parsing…</span>
     case 'done':
