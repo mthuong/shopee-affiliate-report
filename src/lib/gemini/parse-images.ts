@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { ParsedOrder } from '@/lib/supabase/types'
+import type { ModelName } from './model-cascade'
 
 const CHUNK_SIZE = 10
 
@@ -41,13 +42,14 @@ export function parseGeminiResponse(raw: string): ParsedOrder[] {
 export type ChunkFailure = { chunkIndex: number; message: string }
 
 export async function parseImagesWithGemini(
-  imageFiles: { base64: string; mimeType: string }[]
+  imageFiles: { base64: string; mimeType: string }[],
+  modelName: ModelName,
 ): Promise<{ orders: ParsedOrder[]; failures: ChunkFailure[] }> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not configured')
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const model = genAI.getGenerativeModel({ model: modelName })
   const prompt = buildGeminiPrompt()
   const allOrders: ParsedOrder[] = []
   const failures: ChunkFailure[] = []
