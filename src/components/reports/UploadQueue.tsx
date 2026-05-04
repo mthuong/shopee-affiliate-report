@@ -2,11 +2,17 @@
 
 import { useEffect, useRef } from 'react'
 import { parseImage } from '@/actions/parse'
+import {
+  createCascadeState,
+  markCalled,
+  markCooled,
+  modelShortName,
+  pickNextModel,
+  MODEL_PREFERENCE,
+  type CascadeState,
+  type ModelName,
+} from '@/lib/gemini/model-cascade'
 import type { ParsedOrder } from '@/lib/supabase/types'
-
-// Gemini 2.5 Flash free tier peaks at 5 requests/min. 13s spacing keeps any
-// rolling 60s window at ≤5 calls with a small safety margin.
-const RATE_LIMIT_INTERVAL_MS = 13000
 
 export type QueueStatus = 'queued' | 'throttled' | 'parsing' | 'done' | 'failed'
 
@@ -17,6 +23,7 @@ export type QueueItem = {
   status: QueueStatus
   orders: ParsedOrder[]
   error: string | null
+  model?: ModelName
 }
 
 type Props = {
@@ -41,7 +48,7 @@ function readFileAsBase64(file: File): Promise<{ base64: string; mimeType: strin
 
 export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }: Props) {
   const inFlight = useRef(false)
-  const lastCallAtRef = useRef<number>(0)
+  const cascadeRef = useRef<CascadeState>(createCascadeState())
 
   useEffect(() => {
     if (inFlight.current) return
@@ -53,21 +60,44 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
     const file = next.file
     ;(async () => {
       try {
-        const waitMs = Math.max(0, RATE_LIMIT_INTERVAL_MS - (Date.now() - lastCallAtRef.current))
-        if (waitMs > 0) {
-          onUpdate(id, { status: 'throttled' })
-          await new Promise((r) => setTimeout(r, waitMs))
-        }
-        lastCallAtRef.current = Date.now()
-        onUpdate(id, { status: 'parsing' })
+        // Pre-load the image bytes once; reused across cascade attempts.
         const image = await readFileAsBase64(file)
-        const { orders, error } = await parseImage(image)
-        if (error) {
-          console.error('[UploadQueue] parse failed for', file.name, '—', error)
-          onUpdate(id, { status: 'failed', error })
-        } else {
-          onUpdate(id, { status: 'done', orders, error: null })
+
+        while (true) {
+          const choice = pickNextModel(cascadeRef.current)
+          if (!choice) {
+            onUpdate(id, { status: 'failed', error: 'All Gemini models exhausted today — try again after midnight UTC' })
+            return
+          }
+
+          if (choice.waitMs > 0) {
+            onUpdate(id, { status: 'throttled' })
+            await new Promise((r) => setTimeout(r, choice.waitMs))
+          }
+
+          onUpdate(id, { status: 'parsing' })
+          markCalled(cascadeRef.current, choice.model)
+
+          const { orders, error, rateLimited } = await parseImage(image, choice.model)
+
+          if (rateLimited) {
+            console.warn('[UploadQueue]', choice.model, 'rate-limited; cascading')
+            markCooled(cascadeRef.current, choice.model)
+            // No-op patch forces parent setQueue → re-render, so the header's
+            // `availableCount` (derived from cascadeRef.current.cooled.size) updates live.
+            onUpdate(id, {})
+            continue
+          }
+
+          if (error) {
+            console.error('[UploadQueue] parse failed for', file.name, '—', error)
+            onUpdate(id, { status: 'failed', error })
+            return
+          }
+
+          onUpdate(id, { status: 'done', orders, error: null, model: choice.model })
           onParsed?.(orders)
+          return
         }
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Unknown error'
@@ -86,6 +116,13 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
   const activeCount = items.filter((i) => i.status === 'parsing' || i.status === 'throttled' || i.status === 'queued').length
   const allDone = activeCount === 0
 
+  // Header counter is driven by the no-op `onUpdate(id, {})` re-render
+  // trigger above; reading the ref here is intentional.
+  const cooledCount = cascadeRef.current.cooled.size
+  // eslint-disable-next-line react-hooks/refs
+  const availableCount = MODEL_PREFERENCE.length - cooledCount
+  const allExhausted = availableCount === 0
+
   return (
     <div className="mt-4 border border-gray-800 rounded-xl p-4">
       <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
@@ -94,7 +131,13 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
         </h3>
         <button onClick={onClearAll} className="text-xs text-gray-500 hover:text-gray-300">Clear all</button>
       </div>
-      <p className="text-[11px] text-gray-500 mb-3">Throttled to 5 requests/min (Gemini free tier)</p>
+      {allExhausted ? (
+        <p className="text-[11px] text-red-400 mb-3">⚠ All Gemini models exhausted today — try again after midnight UTC</p>
+      ) : (
+        <p className="text-[11px] text-gray-500 mb-3">
+          {availableCount} of {MODEL_PREFERENCE.length} models available
+        </p>
+      )}
       <div className="space-y-2">
         {items.map((item) => (
           <QueueRow key={item.id} item={item} onRetry={() => onUpdate(item.id, { status: 'queued', error: null })} onRemove={() => onRemove(item.id)} />
@@ -137,8 +180,15 @@ function StatusBadge({ item }: { item: QueueItem }) {
       return <span className="text-xs text-gray-400 animate-pulse" title="Waiting for rate limit">⏱ Waiting…</span>
     case 'parsing':
       return <span className="text-xs text-orange-400 animate-pulse">⚡ Parsing…</span>
-    case 'done':
-      return <span className="text-xs text-green-400">✓ {item.orders.length} order{item.orders.length === 1 ? '' : 's'}</span>
+    case 'done': {
+      const suffix = item.model ? ` · ${modelShortName(item.model)}` : ''
+      const title = item.model ? `Parsed by ${item.model}` : undefined
+      return (
+        <span className="text-xs text-green-400" title={title}>
+          ✓ {item.orders.length} order{item.orders.length === 1 ? '' : 's'}{suffix}
+        </span>
+      )
+    }
     case 'failed':
       return <span className="text-xs text-red-400" title={item.error ?? ''}>✗ Failed</span>
   }
