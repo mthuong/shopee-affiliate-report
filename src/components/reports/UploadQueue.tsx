@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { parseImage } from '@/actions/parse'
 import {
   createCascadeState,
@@ -49,6 +49,9 @@ function readFileAsBase64(file: File): Promise<{ base64: string; mimeType: strin
 export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }: Props) {
   const inFlight = useRef(false)
   const cascadeRef = useRef<CascadeState>(createCascadeState())
+  // Re-render trigger when cascadeRef.current.cooled mutates. Refs aren't reactive,
+  // so the worker bumps this state to force a re-render that picks up the new size.
+  const [cooledTick, setCooledTick] = useState(0)
 
   useEffect(() => {
     if (inFlight.current) return
@@ -83,9 +86,8 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
           if (rateLimited) {
             console.warn('[UploadQueue]', choice.model, 'rate-limited; cascading')
             markCooled(cascadeRef.current, choice.model)
-            // No-op patch forces parent setQueue → re-render, so the header's
-            // `availableCount` (derived from cascadeRef.current.cooled.size) updates live.
-            onUpdate(id, {})
+            // Bump tick so the header counter re-renders with the new cooled size.
+            setCooledTick((n) => n + 1)
             continue
           }
 
@@ -116,11 +118,13 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
   const activeCount = items.filter((i) => i.status === 'parsing' || i.status === 'throttled' || i.status === 'queued').length
   const allDone = activeCount === 0
 
-  // Header counter is driven by the no-op `onUpdate(id, {})` re-render
-  // trigger above; reading the ref here is intentional.
-  const cooledCount = cascadeRef.current.cooled.size
+  // Reading the ref during render is intentional. The truth source is
+  // `cascadeRef.current.cooled` (mutated by the worker), and `cooledTick`
+  // is the local re-render trigger that ensures this read picks up the
+  // new value. Without the void, ESLint thinks `cooledTick` is unused.
+  void cooledTick
   // eslint-disable-next-line react-hooks/refs
-  const availableCount = MODEL_PREFERENCE.length - cooledCount
+  const availableCount = MODEL_PREFERENCE.length - cascadeRef.current.cooled.size
   const allExhausted = availableCount === 0
 
   return (

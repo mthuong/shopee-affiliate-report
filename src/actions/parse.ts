@@ -7,6 +7,8 @@ import type { ParsedOrder } from '@/lib/supabase/types'
 
 type ImageInput = { base64: string; mimeType: string }
 
+// Bulk-parse helper. Not currently called by the UI (the per-image queue in
+// UploadQueue calls parseImage instead). Kept for API parity with parseImage.
 export async function parseImages(
   images: ImageInput[],
   modelName: ModelName,
