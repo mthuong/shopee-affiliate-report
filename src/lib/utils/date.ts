@@ -5,6 +5,7 @@ const MONTH_NAMES = [
 
 export function formatOrderDate(isoString: string): string {
   const d = new Date(isoString)
+  if (isNaN(d.getTime())) return '—'
   const dd = String(d.getDate()).padStart(2, '0')
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const yyyy = d.getFullYear()
