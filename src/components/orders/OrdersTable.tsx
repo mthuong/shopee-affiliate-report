@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { deleteOrder } from '@/actions/orders'
 import { useToast } from '@/components/ui/Toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -16,13 +16,39 @@ type Props = {
   clients: Client[]
   onDeleteSuccess: (id: string) => void
   onEditSuccess: (updated: OrderWithStatus) => void
+  selectMode?: boolean
+  selectedIds?: Set<string>
+  onToggleSelect?: (id: string) => void
+  onToggleSelectAll?: () => void
 }
 
-export function OrdersTable({ orders, reportId, statuses, clients, onDeleteSuccess, onEditSuccess }: Props) {
+export function OrdersTable({
+  orders,
+  reportId,
+  statuses,
+  clients,
+  onDeleteSuccess,
+  onEditSuccess,
+  selectMode = false,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+}: Props) {
   const { showToast } = useToast()
   const [editOrder, setEditOrder] = useState<OrderWithStatus | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<OrderWithStatus | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const headerCheckboxRef = useRef<HTMLInputElement>(null)
+
+  const unassigned = orders.filter((o) => o.client_id === null)
+  const numUnassigned = unassigned.length
+  const numSelected = selectedIds?.size ?? 0
+  const allSelected = numUnassigned > 0 && numSelected === numUnassigned
+  const someSelected = numSelected > 0 && numSelected < numUnassigned
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) headerCheckboxRef.current.indeterminate = someSelected
+  }, [someSelected])
 
   async function handleDelete() {
     if (!deleteTarget) return
@@ -47,29 +73,64 @@ export function OrdersTable({ orders, reportId, statuses, clients, onDeleteSucce
         <table className="w-full text-sm">
           <thead>
             <tr className="text-gray-400 border-b border-gray-800 text-left">
+              {selectMode && (
+                <th className="pb-2 pr-3 w-8">
+                  <input
+                    ref={headerCheckboxRef}
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={() => onToggleSelectAll?.()}
+                    disabled={numUnassigned === 0}
+                    aria-label="Select all unassigned orders"
+                  />
+                </th>
+              )}
               <th className="pb-2 pr-4">Order ID</th>
               <th className="pb-2 pr-4">Product</th>
               <th className="pb-2 pr-4">Date</th>
               <th className="pb-2 pr-4">Status</th>
               <th className="pb-2 pr-4 text-right">Commission</th>
               <th className="pb-2 pr-4">Client</th>
-              <th className="pb-2 w-8"></th>
+              {!selectMode && <th className="pb-2 w-8"></th>}
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="group border-b border-gray-800/50 hover:bg-gray-800/40 cursor-pointer" onClick={() => setEditOrder(order)}>
-                <td className="py-3 pr-4 text-white font-mono text-xs">{order.order_id}</td>
-                <td className="py-3 pr-4 text-gray-300 max-w-[180px] truncate">{order.product_name ?? '—'}</td>
-                <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{formatOrderDate(order.ordered_at)}</td>
-                <td className={`py-3 pr-4 ${order.order_statuses.name === 'Đã hoàn thành' ? 'text-green-400' : 'text-red-400'}`}>{order.order_statuses.name}</td>
-                <td className="py-3 pr-4 text-right text-white">{formatVND(order.commission)}</td>
-                <td className="py-3 pr-4 text-gray-400">{order.clients?.name ?? '—'}</td>
-                <td className="py-3 text-center">
-                  <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(order) }} className="invisible group-hover:visible text-red-400 hover:text-red-300 p-1" title="Delete">🗑</button>
-                </td>
-              </tr>
-            ))}
+            {orders.map((order) => {
+              const isUnassigned = order.client_id === null
+              const isChecked = selectedIds?.has(order.id) ?? false
+              const rowClickable = !selectMode
+              return (
+                <tr
+                  key={order.id}
+                  className={`group border-b border-gray-800/50 ${rowClickable ? 'hover:bg-gray-800/40 cursor-pointer' : ''} ${selectMode && !isUnassigned ? 'opacity-50' : ''}`}
+                  onClick={rowClickable ? () => setEditOrder(order) : undefined}
+                >
+                  {selectMode && (
+                    <td className="py-3 pr-3 w-8" onClick={(e) => e.stopPropagation()}>
+                      {isUnassigned ? (
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => onToggleSelect?.(order.id)}
+                          aria-label={`Select order ${order.order_id}`}
+                        />
+                      ) : null}
+                    </td>
+                  )}
+                  <td className="py-3 pr-4 text-white font-mono text-xs">{order.order_id}</td>
+                  <td className="py-3 pr-4 text-gray-300 max-w-[180px] truncate">{order.product_name ?? '—'}</td>
+                  <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{formatOrderDate(order.ordered_at)}</td>
+                  <td className={`py-3 pr-4 ${order.order_statuses.name === 'Đã hoàn thành' ? 'text-green-400' : 'text-red-400'}`}>{order.order_statuses.name}</td>
+                  <td className="py-3 pr-4 text-right text-white">{formatVND(order.commission)}</td>
+                  <td className="py-3 pr-4 text-gray-400">{order.clients?.name ?? '—'}</td>
+                  {!selectMode && (
+                    <td className="py-3 text-center">
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(order) }} className="invisible group-hover:visible text-red-400 hover:text-red-300 p-1" title="Delete">🗑</button>
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
