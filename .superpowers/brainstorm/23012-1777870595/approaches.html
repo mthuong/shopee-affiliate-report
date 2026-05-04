@@ -1,0 +1,44 @@
+<h2>Architecture Approaches</h2>
+<p class="subtitle">Choose the approach that fits your needs best</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>⭐ Recommended: Lightweight — No Image Storage</h3>
+      <p>Upload images → send to Gemini API (via Next.js server action) for parsing → show extracted orders → save only order data to Supabase. Images are never stored permanently.</p>
+      <ul style="font-size:0.85em;margin-top:8px;color:var(--muted)">
+        <li>✅ Zero storage costs</li>
+        <li>✅ Simplest architecture</li>
+        <li>✅ Fast to build</li>
+        <li>⚠️ Can't review original screenshots later</li>
+      </ul>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Full — Image Storage + Parsing</h3>
+      <p>Upload images to Supabase Storage → Gemini parses them → extracted orders saved to Postgres. Original screenshots permanently accessible.</p>
+      <ul style="font-size:0.85em;margin-top:8px;color:var(--muted)">
+        <li>✅ Keep original proof screenshots</li>
+        <li>✅ Re-parse images if needed</li>
+        <li>⚠️ Supabase Storage costs (small but non-zero)</li>
+        <li>⚠️ More complex setup</li>
+      </ul>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Manual-first — Parsing as Enhancement</h3>
+      <p>Primarily a manual entry app. Optionally upload images for auto-fill. Focus is on the order management, client tracking, and Excel export features.</p>
+      <ul style="font-size:0.85em;margin-top:8px;color:var(--muted)">
+        <li>✅ No AI API dependency</li>
+        <li>✅ Works offline-ish</li>
+        <li>⚠️ Manual entry is slow for many orders</li>
+        <li>⚠️ Defeats the purpose of image upload</li>
+      </ul>
+    </div>
+  </div>
+</div>

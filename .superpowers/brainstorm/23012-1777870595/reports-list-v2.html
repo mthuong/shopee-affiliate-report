@@ -1,0 +1,95 @@
+<style>
+.report-card { background:#16213e; border:1px solid #333; border-radius:8px; padding:16px 20px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:background 0.15s; position:relative; }
+.report-card:hover { background:#1e2d4a; border-color:#4ecca3; }
+.card-actions { display:none; gap:6px; }
+.report-card:hover .card-actions { display:flex; }
+.confirm-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:200; align-items:center; justify-content:center; }
+.confirm-overlay.open { display:flex; }
+.confirm-box { background:#1a1a2e; border:2px solid #e94560; border-radius:10px; padding:24px; width:360px; text-align:center; }
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#16213e; border:1px solid #444; border-radius:10px; padding:24px; width:400px; max-width:95vw; }
+.btn-save { background:#4ecca3; color:#1a1a2e; border:none; padding:8px 20px; border-radius:6px; font-size:1em; font-weight:bold; cursor:pointer; }
+.btn-cancel { background:transparent; color:#aaa; border:1px solid #555; padding:8px 16px; border-radius:6px; font-size:1em; cursor:pointer; margin-right:8px; }
+.btn-confirm-delete { background:#e94560; color:#fff; border:none; padding:8px 20px; border-radius:6px; font-size:1em; font-weight:bold; cursor:pointer; }
+</style>
+
+<h2>Reports List — with Edit &amp; Delete</h2>
+<p class="subtitle">Hover a card to reveal edit name ✏️ and delete 🗑 actions</p>
+
+<div class="mockup">
+  <div class="mockup-header" style="font-size:1.3em;padding:14px 20px;display:flex;justify-content:space-between;align-items:center">
+    <span>📊 Shopee Affiliate Reports</span>
+    <button style="background:#e94560;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:0.85em;cursor:pointer">+ New Report</button>
+  </div>
+  <div class="mockup-body">
+
+    <!-- Report card with hover actions -->
+    <div class="report-card">
+      <div style="flex:1" onclick="alert('→ Opens report detail with upload area always visible')">
+        <div style="color:#fff;font-size:1.1em;font-weight:bold;margin-bottom:4px">April 2026</div>
+        <div style="color:#888;font-size:0.9em">19 images uploaded · 21 orders · 18 completed</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="text-align:right">
+          <div style="color:#4ecca3;font-size:1.05em;font-weight:bold">₫312,400</div>
+        </div>
+        <div class="card-actions">
+          <button onclick="event.stopPropagation();document.querySelector('.edit-modal').classList.add('open')" style="background:#0f3460;color:#4ecca3;border:1px solid #4ecca3;padding:6px 10px;border-radius:6px;font-size:0.85em;cursor:pointer" title="Rename">✏️ Rename</button>
+          <button onclick="event.stopPropagation();document.querySelector('.confirm-overlay').classList.add('open')" style="background:transparent;color:#e94560;border:1px solid #e94560;padding:6px 10px;border-radius:6px;font-size:0.85em;cursor:pointer" title="Delete">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <div style="flex:1">
+        <div style="color:#fff;font-size:1.1em;font-weight:bold;margin-bottom:4px">March 2026</div>
+        <div style="color:#888;font-size:0.9em">24 images uploaded · 28 orders · 25 completed</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="text-align:right">
+          <div style="color:#4ecca3;font-size:1.05em;font-weight:bold">₫420,000</div>
+        </div>
+        <div class="card-actions">
+          <button onclick="event.stopPropagation()" style="background:#0f3460;color:#4ecca3;border:1px solid #4ecca3;padding:6px 10px;border-radius:6px;font-size:0.85em;cursor:pointer">✏️ Rename</button>
+          <button onclick="event.stopPropagation()" style="background:transparent;color:#e94560;border:1px solid #e94560;padding:6px 10px;border-radius:6px;font-size:0.85em;cursor:pointer">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;padding:12px 16px;background:#0f1e38;border-radius:8px;border:1px dashed #4ecca3;color:#4ecca3;font-size:0.9em">
+      📎 <strong>Uploading more images:</strong> Open any report → the upload area is always visible at the top — add more screenshots anytime and re-run "Parse All".
+    </div>
+
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #333;display:flex;justify-content:space-between;color:#aaa;font-size:0.9em">
+      <span>2 reports shown</span>
+      <span style="color:#4ecca3">All-time: ₫732,400</span>
+    </div>
+  </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal-overlay edit-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-box">
+    <h3 style="color:#4ecca3;margin:0 0 16px">✏️ Rename Report</h3>
+    <div style="margin-bottom:16px">
+      <label style="display:block;color:#888;font-size:0.9em;margin-bottom:6px">Report Name</label>
+      <input type="text" value="April 2026" style="width:100%;background:#0f3460;border:1px solid #444;color:#fff;padding:10px;border-radius:6px;font-size:1em;box-sizing:border-box"/>
+    </div>
+    <div style="text-align:right">
+      <button class="btn-cancel" onclick="document.querySelector('.edit-modal').classList.remove('open')">Cancel</button>
+      <button class="btn-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="confirm-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="confirm-box">
+    <div style="font-size:2em;margin-bottom:12px">🗑️</div>
+    <h3 style="color:#e94560;margin:0 0 8px">Delete Report?</h3>
+    <p style="color:#aaa;margin:0 0 20px">Deleting <strong style="color:#fff">April 2026</strong> will permanently remove all <strong style="color:#fff">21 orders</strong> in this report. This cannot be undone.</p>
+    <button class="btn-cancel" onclick="document.querySelector('.confirm-overlay').classList.remove('open')">Cancel</button>
+    <button class="btn-confirm-delete" onclick="document.querySelector('.confirm-overlay').classList.remove('open')">Yes, Delete Report</button>
+  </div>
+</div>

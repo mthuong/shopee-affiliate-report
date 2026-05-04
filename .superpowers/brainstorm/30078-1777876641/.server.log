@@ -1,0 +1,3 @@
+{"type":"server-started","port":60261,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:60261","screen_dir":"/Users/thomas/Documents/shopee-affiliate-report/.superpowers/brainstorm/30078-1777876641"}
+{"type":"screen-added","file":"/Users/thomas/Documents/shopee-affiliate-report/.superpowers/brainstorm/30078-1777876641/reports-list-v2.html"}
+{"type":"server-stopped","reason":"idle timeout"}

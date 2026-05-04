@@ -1,0 +1,46 @@
+I want to build a Vercel website ReactJS
+Techstack can be use NextJS
+
+You can use Vercel agent skills for development:
+vercel-react-best-practices	React and Next.js performance optimization guidelines with 40+ rules across 8 categories	
+vercel-composition-patterns	React composition patterns that scale, helping avoid boolean prop proliferation	
+vercel-react-native-skills	React Native best practices with 16 rules covering performance, architecture, and platform-specific patterns	
+next-best-practices	Next.js best practices covering file conventions, RSC boundaries, data patterns, and more	
+next-cache-components	Next.js 16 Cache Components and PPR for mixing static, cached, and dynamic content
+
+## Github
+Create new github repo with username mthuong
+
+## Requirement
+A simple website no need authentication.
+
+Each month I will capture screenshots from shopee app related to Affilicate report of my client.
+
+I can create new report, upload report images as tasks/report
+
+After user upload all the report file, the webapp will read the image to have information of affiliate commission.
+Example the image tasks/report/z7788712335270_83b03ac8a1cbb99b2f54f872ea43cd4e.jpg
+we will have
+- ID đơn đặt hàng: 2604282M8582FA
+- Status: "Đã hoàn thành" or "Đã hủy"
+- Hoa hồng: ₫6.630
+- Đặt Hàng Vào 15:47 24-04-2026
+
+After parsing all data, display a list of order.
+User can select "Đã hoàn thành" order and assign to specific client.
+
+Each month, we can create a list of clients who place order by my affiliate.
+
+Then, I can have a feature to see all the order report by client with total commission.
+
+On each client, default percent commission share is 50%. User can change it and see the actual commission return for that client.
+
+## Manual enter order
+User can manual enter order information
+
+- ID đơn đặt hàng
+- Status: "Đã hoàn thành" or "Đã hủy"
+- Hoa hồng: 6.630
+- Ngày Đặt Hàng - default is today
+
+## Allow user export commission return for a client in excel format

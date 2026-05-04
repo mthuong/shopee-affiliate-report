@@ -1,0 +1,68 @@
+<h2>Client Detail — Revised</h2>
+<p class="subtitle">Orders grouped by monthly report, each with its own commission %</p>
+
+<div class="mockup">
+  <div class="mockup-header">👤 Nguyễn Văn A — Client Detail</div>
+  <div class="mockup-body" style="font-size:0.82em;font-family:monospace">
+
+    <!-- Total Summary -->
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div style="background:#0f3460;padding:10px;border-radius:6px;flex:1;text-align:center">
+        <div style="color:#aaa;font-size:0.85em">Total Across All Months</div>
+        <div style="color:#4ecca3;font-size:1.3em;font-weight:bold">₫63,900</div>
+      </div>
+      <div style="background:#0f3460;padding:10px;border-radius:6px;flex:1;text-align:center">
+        <div style="color:#aaa;font-size:0.85em">Total Commission Return</div>
+        <div style="color:#e94560;font-size:1.3em;font-weight:bold">₫31,950</div>
+      </div>
+    </div>
+
+    <!-- April 2026 section -->
+    <div style="border:1px solid #333;border-radius:6px;padding:10px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="color:#e94560;font-weight:bold">April 2026</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:#aaa">Commission:</span>
+          <input type="range" min="0" max="100" value="50" style="width:80px" disabled/>
+          <span style="color:#4ecca3;font-weight:bold">50%</span>
+          <span style="background:#4ecca3;color:#1a1a2e;padding:3px 8px;border-radius:4px;font-size:0.8em;cursor:pointer">📥 Export</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:6px;color:#888;font-size:0.85em;padding-bottom:4px;border-bottom:1px solid #333">
+        <span>Order ID</span><span>Date</span><span>Status</span><span>Commission</span>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:6px;padding:4px 0;color:#fff;font-size:0.85em">
+        <span>2604282M8582FA</span><span>24-04-2026 15:47</span><span style="color:#4ecca3">Đã hoàn thành</span><span>₫6,630</span>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:6px;padding:4px 0;color:#fff;font-size:0.85em">
+        <span>2604291X1234AB</span><span>29-04-2026 09:12</span><span style="color:#4ecca3">Đã hoàn thành</span><span>₫14,200</span>
+      </div>
+      <div style="margin-top:8px;text-align:right;color:#4ecca3;font-size:0.9em">
+        Subtotal: ₫20,830 → Return: <strong>₫10,415</strong>
+      </div>
+    </div>
+
+    <!-- March 2026 section -->
+    <div style="border:1px solid #333;border-radius:6px;padding:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="color:#e94560;font-weight:bold">March 2026</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:#aaa">Commission:</span>
+          <input type="range" min="0" max="100" value="60" style="width:80px" disabled/>
+          <span style="color:#4ecca3;font-weight:bold">60%</span>
+          <span style="background:#4ecca3;color:#1a1a2e;padding:3px 8px;border-radius:4px;font-size:0.8em;cursor:pointer">📥 Export</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:6px;color:#888;font-size:0.85em;padding-bottom:4px;border-bottom:1px solid #333">
+        <span>Order ID</span><span>Date</span><span>Status</span><span>Commission</span>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr;gap:6px;padding:4px 0;color:#fff;font-size:0.85em">
+        <span>2503151A9876CD</span><span>15-03-2026 11:30</span><span style="color:#4ecca3">Đã hoàn thành</span><span>₫43,070</span>
+      </div>
+      <div style="margin-top:8px;text-align:right;color:#4ecca3;font-size:0.9em">
+        Subtotal: ₫43,070 → Return: <strong>₫25,842</strong>
+      </div>
+    </div>
+
+  </div>
+</div>
