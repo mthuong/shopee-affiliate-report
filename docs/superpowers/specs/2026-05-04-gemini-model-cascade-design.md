@@ -85,6 +85,28 @@ Pure function. Returns `{ model, waitMs } | null`.
 
 Matches case-insensitive: `\b429\b`, `RESOURCE_EXHAUSTED`, `quota`, `rate limit`. Used both server-side (to set `rateLimited` on the action's return) and as a backup client-side classifier.
 
+**All 429-class errors are treated uniformly** — we don't distinguish per-minute (`GenerateRequestsPerMinute`) from per-day (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`) quota violations. Any 429 cools the model for the session. This is correct because our per-model `minIntervalMs` spacing prevents per-minute violations, so any 429 we actually observe is overwhelmingly likely to be the daily quota — and "cool for session" is the right response to that. Per-minute violations slip-through (e.g. from a clock skew or buffer underflow) would unnecessarily mark a model cooled, but the cascade still produces a correct result and the user can recover by reloading the page.
+
+We also deliberately ignore the `retryDelay` field on Google's `RetryInfo` payload. Cascading to the next model is faster than waiting, and the suggested delay is unreliable for daily-quota errors (Google sometimes returns a short delay even when the actual reset is at midnight UTC).
+
+### Real-world 429 error format (test fixture)
+
+The Gemini SDK surfaces a 429 as a single `Error` whose `message` looks like (one line, broken here for readability):
+
+```
+[GoogleGenerativeAI Error]: Error fetching from
+https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent:
+[429 Too Many Requests] You exceeded your current quota, please check your plan and
+billing details. ... * Quota exceeded for metric:
+generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20,
+model: gemini-2.5-flash Please retry in 31.073790986s. [{"@type":...,"violations":[{
+"quotaMetric":"...","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+"quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"
+}]},{"@type":"...RetryInfo","retryDelay":"31s"}]
+```
+
+`isRateLimitError` must return `true` for this string. The unit test must include the verbatim message above as a fixture.
+
 ### Worker loop in `UploadQueue`
 
 ```
@@ -220,6 +242,7 @@ When `pickNextModel` returns `null` for a row, the row is marked `failed` with `
 
 `isRateLimitError`:
 - Matches `429`, `RESOURCE_EXHAUSTED`, `quota`, `rate limit` (case-insensitive).
+- Matches the verbatim Gemini SDK 429 message under "Real-world 429 error format" above (used as a test fixture).
 - Does not match unrelated errors (e.g. `Network timeout`, `Invalid input`).
 - Tolerates `null` / `undefined` / non-Error throwables.
 
