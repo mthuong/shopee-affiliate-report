@@ -223,9 +223,12 @@ export function pickNextModel(
   if (available.length === 0) return null
 
   // First pass: pick the highest-preference model that is ready right now.
+  // A model that's never been called (undefined in the map) is treated as ready;
+  // using `?? 0` would force `now >= 0 + minIntervalMs`, blocking fresh-state calls
+  // until enough wall-clock time has passed since epoch.
   for (const m of available) {
-    const last = state.lastCallAt.get(m.name) ?? 0
-    if (now >= last + m.minIntervalMs) {
+    const last = state.lastCallAt.get(m.name)
+    if (last === undefined || now >= last + m.minIntervalMs) {
       return { model: m.name, waitMs: 0 }
     }
   }
