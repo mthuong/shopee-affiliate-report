@@ -26,6 +26,11 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
 
   async function handleSaveAll() {
     if (orders.length === 0) return
+    const missingStatus = orders.filter((o) => !o.status_name?.trim()).length
+    if (missingStatus > 0) {
+      showToast(`${missingStatus} order${missingStatus === 1 ? '' : 's'} need a status before saving`, 'error')
+      return
+    }
     setSaving(true)
     try {
       // Deduplicate status names to avoid race conditions in concurrent resolveStatusId calls
@@ -83,8 +88,13 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
                 <td className="py-2 pr-3"><input value={o.product_name ?? ''} onChange={(e) => onChange(o._key, 'product_name', e.target.value)} className="input text-xs w-40" placeholder="—" /></td>
                 <td className="py-2 pr-3 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
                 <td className="py-2 pr-3">
-                  <select value={o.status_name} onChange={(e) => onChange(o._key, 'status_name', e.target.value)} className="input text-xs">
-                    {statuses.map((s) => <option key={s.id}>{s.name}</option>)}
+                  <select
+                    value={o.status_name ?? ''}
+                    onChange={(e) => onChange(o._key, 'status_name', e.target.value)}
+                    className={`input text-xs ${!o.status_name?.trim() ? 'border-red-500' : ''}`}
+                  >
+                    {!o.status_name?.trim() && <option value="" disabled>— Choose status —</option>}
+                    {statuses.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                   </select>
                 </td>
                 <td className="py-2 pr-3 text-right text-white">{formatVND(o.commission_vnd)}</td>

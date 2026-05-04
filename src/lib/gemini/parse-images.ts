@@ -25,9 +25,14 @@ export function parseGeminiResponse(raw: string): ParsedOrder[] {
   try {
     const parsed = JSON.parse(cleaned)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (o) => typeof o.order_id === 'string' && typeof o.commission_vnd === 'number'
-    )
+    return parsed
+      .filter(
+        (o) => typeof o.order_id === 'string' && typeof o.commission_vnd === 'number'
+      )
+      .map((o) => ({
+        ...o,
+        status_name: typeof o.status_name === 'string' ? o.status_name : '',
+      }))
   } catch {
     return []
   }

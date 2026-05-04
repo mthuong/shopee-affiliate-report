@@ -32,6 +32,9 @@ export async function parseImage(
 }
 
 export async function resolveStatusId(statusName: string): Promise<number> {
+  if (typeof statusName !== 'string' || !statusName.trim()) {
+    throw new Error('Order status is missing — please assign a status before saving')
+  }
   const supabase = await createClient()
   const normalized = statusName.trim()
 

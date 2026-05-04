@@ -38,4 +38,29 @@ describe('parseGeminiResponse', () => {
   it('returns empty array on empty string', () => {
     expect(parseGeminiResponse('')).toEqual([])
   })
+
+  it('coerces null status_name to empty string', () => {
+    const raw = JSON.stringify([{
+      order_id: 'X',
+      product_name: 'P',
+      status_name: null,
+      commission_vnd: 100,
+      ordered_at: '2026-04-01T10:00:00',
+    }])
+    const result = parseGeminiResponse(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0].status_name).toBe('')
+  })
+
+  it('coerces missing status_name to empty string', () => {
+    const raw = JSON.stringify([{
+      order_id: 'X',
+      product_name: 'P',
+      commission_vnd: 100,
+      ordered_at: '2026-04-01T10:00:00',
+    }])
+    const result = parseGeminiResponse(raw)
+    expect(result).toHaveLength(1)
+    expect(result[0].status_name).toBe('')
+  })
 })
