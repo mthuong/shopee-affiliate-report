@@ -65,6 +65,9 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
   // True while we're auto-opening the next needs-crop item; user-initiated
   // close suppresses auto-open until they add more files or click Crop.
   const [autoOpenSuppressed, setAutoOpenSuppressed] = useState(false)
+  // Number of items already processed in the current cropping batch. Used to
+  // derive a forward-counting "X of N" header in the cropper modal.
+  const [cropProcessedInBatch, setCropProcessedInBatch] = useState(0)
 
   // Auto-open the first needs-crop item when none is currently being cropped.
   // Synchronizing modal-open state with the externally-controlled `items` prop
@@ -84,6 +87,22 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!anyNeedsCrop) setAutoOpenSuppressed(false)
   }, [items, autoOpenSuppressed])
+
+  // Reset the batch counter once no cropping work remains.
+  useEffect(() => {
+    if (cropProcessedInBatch === 0) return
+    const anyNeedsCrop = items.some((i) => i.status === 'needs-crop')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (cropTargetId === null && !anyNeedsCrop) setCropProcessedInBatch(0)
+  }, [items, cropTargetId, cropProcessedInBatch])
+
+  // Clear cropTargetId when the target item is removed externally.
+  useEffect(() => {
+    if (cropTargetId === null) return
+    const stillExists = items.some((i) => i.id === cropTargetId)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!stillExists) setCropTargetId(null)
+  }, [items, cropTargetId])
 
   useEffect(() => {
     if (inFlight.current) return
@@ -158,16 +177,11 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
   const allExhausted = availableCount === 0
 
   const cropTarget = cropTargetId ? items.find((i) => i.id === cropTargetId) : null
-  const totalCropping = items.filter(
-    (i) => i.status === 'needs-crop' || (i.id === cropTargetId)
-  ).length
-  const cropIndex = (() => {
-    if (!cropTarget) return 0
-    const order = items
-      .filter((i) => i.status === 'needs-crop' || i.id === cropTargetId)
-      .map((i) => i.id)
-    return Math.max(1, order.indexOf(cropTarget.id) + 1)
-  })()
+  // Items still awaiting crop (this includes the one currently shown in the modal,
+  // which stays in 'needs-crop' state until the user confirms or uses full image).
+  const remainingNeedsCrop = items.filter((i) => i.status === 'needs-crop').length
+  const totalCropping = cropProcessedInBatch + remainingNeedsCrop
+  const cropIndex = cropTarget ? cropProcessedInBatch + 1 : 0
 
   return (
     <div className="mt-4 border border-gray-800 rounded-xl p-4">
@@ -199,7 +213,7 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
         <ImageCropper
           file={cropTarget.file}
           currentIndex={cropIndex}
-          totalCount={Math.max(totalCropping, 1)}
+          totalCount={totalCropping}
           onConfirm={(result) => {
             const objectUrl = URL.createObjectURL(result.blob)
             onUpdate(cropTarget.id, {
@@ -207,6 +221,7 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
               cropped: { base64: result.base64, mimeType: result.mimeType },
               croppedPreviewUrl: objectUrl,
             })
+            setCropProcessedInBatch((n) => n + 1)
             setCropTargetId(null)
           }}
           onUseFullImage={(full) => {
@@ -214,6 +229,7 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
               status: 'queued',
               cropped: full,
             })
+            setCropProcessedInBatch((n) => n + 1)
             setCropTargetId(null)
           }}
           onClose={() => {
