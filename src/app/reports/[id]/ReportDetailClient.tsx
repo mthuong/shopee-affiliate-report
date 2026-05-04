@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ImageUploader } from '@/components/reports/ImageUploader'
-import { PendingOrdersReview } from '@/components/reports/PendingOrdersReview'
+import { PendingOrdersReview, type EditableOrder } from '@/components/reports/PendingOrdersReview'
+import { UploadQueue, type QueueItem } from '@/components/reports/UploadQueue'
 import { OrdersTable } from '@/components/orders/OrdersTable'
 import { OrderModal } from '@/components/orders/OrderModal'
-import { parseImages } from '@/actions/parse'
 import { useToast } from '@/components/ui/Toast'
 import type { OrderWithStatus, OrderStatus, Client, ParsedOrder } from '@/lib/supabase/types'
 
@@ -19,61 +19,85 @@ type Props = {
 export function ReportDetailClient({ reportId, initialOrders, statuses, clients }: Props) {
   const { showToast } = useToast()
   const [orders, setOrders] = useState(initialOrders)
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [pendingOrders, setPendingOrders] = useState<ParsedOrder[] | null>(null)
-  const [isParsing, setIsParsing] = useState(false)
+  const [queue, setQueue] = useState<QueueItem[]>([])
+  const [pendingOrders, setPendingOrders] = useState<EditableOrder[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
+  const nextKeyRef = useRef(0)
 
-  async function handleParseAll() {
-    if (pendingFiles.length === 0) return
-    setIsParsing(true)
-    try {
-      const images = await Promise.all(
-        pendingFiles.map(
-          (f) =>
-            new Promise<{ base64: string; mimeType: string }>((resolve, reject) => {
-              const reader = new FileReader()
-              reader.onload = () => resolve({ base64: (reader.result as string).split(',')[1], mimeType: f.type })
-              reader.onerror = reject
-              reader.readAsDataURL(f)
-            })
-        )
-      )
-      const { orders: parsedOrders, failedChunkCount } = await parseImages(images)
-      if (failedChunkCount > 0) showToast(`${failedChunkCount} batch(es) failed to parse`, 'error')
-      if (parsedOrders.length > 0) {
-        setPendingOrders(parsedOrders)
-        setPendingFiles([])
-      } else {
-        showToast('No orders found in the selected images', 'error')
-      }
-    } catch (e: any) {
-      showToast(e.message ?? 'Parsing failed', 'error')
-    } finally {
-      setIsParsing(false)
-    }
+  function addFiles(files: File[]) {
+    const items: QueueItem[] = files.map((file) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+      status: 'queued',
+      orders: [],
+      error: null,
+    }))
+    setQueue((prev) => [...prev, ...items])
   }
+
+  const updateItem = useCallback((id: string, patch: Partial<QueueItem>) => {
+    setQueue((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)))
+  }, [])
+
+  const removeItem = useCallback((id: string) => {
+    setQueue((prev) => {
+      const target = prev.find((i) => i.id === id)
+      if (target) URL.revokeObjectURL(target.previewUrl)
+      return prev.filter((i) => i.id !== id)
+    })
+  }, [])
+
+  const clearQueue = useCallback(() => {
+    setQueue((prev) => {
+      for (const i of prev) URL.revokeObjectURL(i.previewUrl)
+      return []
+    })
+  }, [])
+
+  const appendParsed = useCallback((parsed: ParsedOrder[]) => {
+    if (parsed.length === 0) return
+    setPendingOrders((prev) => [
+      ...prev,
+      ...parsed.map((o) => ({ ...o, _key: `parsed-${nextKeyRef.current++}` })),
+    ])
+  }, [])
+
+  const onChangeOrder = useCallback((key: string, field: keyof ParsedOrder, value: string | number) => {
+    setPendingOrders((prev) => prev.map((o) => (o._key === key ? { ...o, [field]: value } : o)))
+  }, [])
+
+  const onRemoveOrder = useCallback((key: string) => {
+    setPendingOrders((prev) => prev.filter((o) => o._key !== key))
+  }, [])
+
+  // Revoke any remaining object URLs on unmount
+  useEffect(() => {
+    return () => {
+      setQueue((prev) => {
+        for (const i of prev) URL.revokeObjectURL(i.previewUrl)
+        return prev
+      })
+    }
+  }, [])
 
   return (
     <div>
-      <ImageUploader onFilesSelected={(files) => setPendingFiles((prev) => [...prev, ...files])} pendingCount={pendingFiles.length} />
-      {pendingFiles.length > 0 && (
-        <div className="mt-3 flex items-center gap-3">
-          <button onClick={handleParseAll} disabled={isParsing} className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-white rounded-lg text-sm font-medium disabled:opacity-50">
-            {isParsing ? 'Parsing…' : `Parse All (${pendingFiles.length} image${pendingFiles.length > 1 ? 's' : ''})`}
-          </button>
-          <button onClick={() => setPendingFiles([])} className="text-sm text-gray-500 hover:text-gray-300">Clear</button>
-        </div>
-      )}
+      <ImageUploader onFilesSelected={addFiles} pendingCount={queue.length} />
 
-      {pendingOrders && (
+      <UploadQueue items={queue} onUpdate={updateItem} onRemove={removeItem} onClearAll={clearQueue} onParsed={appendParsed} />
+
+      {pendingOrders.length > 0 && (
         <div className="mt-6">
           <PendingOrdersReview
             reportId={reportId}
-            initialOrders={pendingOrders}
+            orders={pendingOrders}
             statuses={statuses}
+            onChange={onChangeOrder}
+            onRemove={onRemoveOrder}
             onSaved={(saved, skipped) => {
-              setPendingOrders(null)
+              setPendingOrders([])
+              clearQueue()
               const existingIds = new Set(orders.map((o) => `${o.order_id}:${o.report_id}`))
               const newOrders = saved
                 .filter((o) => !existingIds.has(`${o.order_id}:${o.report_id}`))
@@ -85,7 +109,10 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
               setOrders((prev) => [...prev, ...newOrders])
               showToast(skipped > 0 ? `Saved. ${skipped} duplicate(s) skipped.` : 'Orders saved')
             }}
-            onDiscard={() => setPendingOrders(null)}
+            onDiscard={() => {
+              setPendingOrders([])
+              clearQueue()
+            }}
           />
         </div>
       )}

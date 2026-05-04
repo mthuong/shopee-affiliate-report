@@ -8,26 +8,21 @@ import { formatVND } from '@/lib/utils/currency'
 import { formatOrderDate } from '@/lib/utils/date'
 import type { ParsedOrder, OrderStatus, Order } from '@/lib/supabase/types'
 
-type EditableOrder = ParsedOrder & { _key: string }
+export type EditableOrder = ParsedOrder & { _key: string }
 
 type Props = {
   reportId: string
-  initialOrders: ParsedOrder[]
+  orders: EditableOrder[]
   statuses: OrderStatus[]
+  onChange: (key: string, field: keyof ParsedOrder, value: string | number) => void
+  onRemove: (key: string) => void
   onSaved: (saved: Order[], skipped: number) => void
   onDiscard: () => void
 }
 
-export function PendingOrdersReview({ reportId, initialOrders, statuses, onSaved, onDiscard }: Props) {
+export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRemove, onSaved, onDiscard }: Props) {
   const { showToast } = useToast()
-  const [orders, setOrders] = useState<EditableOrder[]>(
-    initialOrders.map((o, i) => ({ ...o, _key: `${i}` }))
-  )
   const [saving, setSaving] = useState(false)
-
-  function update(key: string, field: keyof ParsedOrder, value: string | number) {
-    setOrders((prev) => prev.map((o) => (o._key === key ? { ...o, [field]: value } : o)))
-  }
 
   async function handleSaveAll() {
     if (orders.length === 0) return
@@ -52,8 +47,8 @@ export function PendingOrdersReview({ reportId, initialOrders, statuses, onSaved
       }))
       const { saved, skipped } = await createOrders(resolved)
       onSaved(saved, skipped)
-    } catch (e: any) {
-      showToast(e.message ?? 'Failed to save orders', 'error')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to save orders', 'error')
       setSaving(false)
     }
   }
@@ -84,17 +79,17 @@ export function PendingOrdersReview({ reportId, initialOrders, statuses, onSaved
           <tbody>
             {orders.map((o) => (
               <tr key={o._key} className="border-b border-gray-800/50">
-                <td className="py-2 pr-3"><input value={o.order_id} onChange={(e) => update(o._key, 'order_id', e.target.value)} className="input text-xs w-36" /></td>
-                <td className="py-2 pr-3"><input value={o.product_name ?? ''} onChange={(e) => update(o._key, 'product_name', e.target.value)} className="input text-xs w-40" placeholder="—" /></td>
+                <td className="py-2 pr-3"><input value={o.order_id} onChange={(e) => onChange(o._key, 'order_id', e.target.value)} className="input text-xs w-36" /></td>
+                <td className="py-2 pr-3"><input value={o.product_name ?? ''} onChange={(e) => onChange(o._key, 'product_name', e.target.value)} className="input text-xs w-40" placeholder="—" /></td>
                 <td className="py-2 pr-3 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
                 <td className="py-2 pr-3">
-                  <select value={o.status_name} onChange={(e) => update(o._key, 'status_name', e.target.value)} className="input text-xs">
+                  <select value={o.status_name} onChange={(e) => onChange(o._key, 'status_name', e.target.value)} className="input text-xs">
                     {statuses.map((s) => <option key={s.id}>{s.name}</option>)}
                   </select>
                 </td>
                 <td className="py-2 pr-3 text-right text-white">{formatVND(o.commission_vnd)}</td>
                 <td className="py-2 text-center">
-                  <button onClick={() => setOrders((prev) => prev.filter((x) => x._key !== o._key))} className="text-red-400 hover:text-red-300 text-xs p-1" title="Remove">✕</button>
+                  <button onClick={() => onRemove(o._key)} className="text-red-400 hover:text-red-300 text-xs p-1" title="Remove">✕</button>
                 </td>
               </tr>
             ))}
