@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shopee Affiliate Report
 
-## Getting Started
+Track Shopee affiliate commissions: import orders from screenshots via Gemini AI, manage clients, and export monthly commission reports to Excel.
 
-First, run the development server:
+**Stack:** Next.js 16 · Supabase · Gemini AI · xlsx · Tailwind CSS
+
+---
+
+## Prerequisites
+
+- Node.js 18+
+- A [Supabase](https://supabase.com) project
+- A [Gemini API key](https://aistudio.google.com/) (free tier works)
+
+---
+
+## Local Development
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Set up environment variables
+
+Copy the example file and fill in your values:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local`:
+
+```env
+# Supabase — Project Settings > API
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-publishable-key>
+
+# Gemini — https://aistudio.google.com/
+GEMINI_API_KEY=<your-gemini-api-key>
+```
+
+> **Note:** The Supabase key is labelled **Publishable key** in the dashboard (formerly "anon key"). The env var name stays `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+### 3. Apply the database migration
+
+In the [Supabase SQL Editor](https://supabase.com/dashboard), open your project and run the contents of:
+
+```
+supabase/migrations/001_initial.sql
+```
+
+This creates the 5 tables (`reports`, `orders`, `order_statuses`, `clients`, `report_clients`) and seeds the order statuses.
+
+### 4. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. Run tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm test
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment (Vercel)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 1. Push to GitHub
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+git push origin main
+```
 
-## Deploy on Vercel
+### 2. Import on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Import the `shopee-affiliate-report` repository
+3. Add the following environment variables:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase Publishable key |
+| `GEMINI_API_KEY` | Your Gemini API key |
+
+4. Click **Deploy**
+
+### 3. Apply the database migration
+
+If you haven't already, run `supabase/migrations/001_initial.sql` in the Supabase SQL Editor for your production project.
+
+---
+
+## Features
+
+- **Reports** — Create monthly reports, upload Shopee commission screenshots, and let Gemini AI parse orders automatically
+- **Order management** — Review parsed orders, edit details, add orders manually
+- **Clients** — Assign orders to clients, set per-report commission percentage
+- **Excel export** — Download a formatted `.xlsx` file for any client × report combination
