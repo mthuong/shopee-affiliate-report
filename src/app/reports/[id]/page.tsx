@@ -5,10 +5,11 @@ import { getClients } from '@/actions/clients'
 import { ReportDetailClient } from './ReportDetailClient'
 import { RenameReportButton } from '@/components/reports/RenameReportButton'
 
-export default async function ReportDetailPage({ params }: { params: { id: string } }) {
+export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const [report, orders, statuses, clientsData] = await Promise.all([
-    getReport(params.id),
-    getOrdersByReport(params.id),
+    getReport(id),
+    getOrdersByReport(id),
     getOrderStatuses(),
     getClients(),
   ])

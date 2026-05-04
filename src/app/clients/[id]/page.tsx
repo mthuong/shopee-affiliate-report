@@ -11,10 +11,11 @@ type OrderWithReport = OrderWithStatus & {
   reports: { id: string; name: string; created_at: string } | null
 }
 
-export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const [client, ordersRaw, statuses, allClientsData] = await Promise.all([
-    getClient(params.id),
-    getOrdersByClient(params.id),
+    getClient(id),
+    getOrdersByClient(id),
     getOrderStatuses(),
     getClients(),
   ])
@@ -32,7 +33,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     reportIdSet.map(async (reportId) => {
       const [report, rc] = await Promise.all([
         getReport(reportId),
-        getReportClient(reportId, params.id),
+        getReportClient(reportId, id),
       ])
       if (!report) return null
       return {
