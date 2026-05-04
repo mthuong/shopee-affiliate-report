@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ImageCropper } from '../ImageCropper'
 
 // Mock react-image-crop so it doesn't try to lay out an image in jsdom.
@@ -84,11 +84,10 @@ describe('ImageCropper', () => {
     Object.defineProperty(img, 'naturalHeight', { configurable: true, value: 600 })
     fireEvent.load(img)
     fireEvent.click(screen.getByRole('button', { name: /confirm crop/i }))
-    // Wait a microtask for the async helper to resolve.
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(onConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ base64: 'CROPPED_BASE64', mimeType: 'image/jpeg' })
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith(
+        expect.objectContaining({ base64: 'CROPPED_BASE64', mimeType: 'image/jpeg' })
+      )
     )
   })
 
@@ -106,10 +105,10 @@ describe('ImageCropper', () => {
       />
     )
     fireEvent.click(screen.getByRole('button', { name: /use full image/i }))
-    await Promise.resolve()
-    await Promise.resolve()
-    expect(onUseFullImage).toHaveBeenCalledWith(
-      expect.objectContaining({ base64: 'FULL_BASE64', mimeType: 'image/jpeg' })
+    await waitFor(() =>
+      expect(onUseFullImage).toHaveBeenCalledWith(
+        expect.objectContaining({ base64: 'FULL_BASE64', mimeType: 'image/jpeg' })
+      )
     )
   })
 

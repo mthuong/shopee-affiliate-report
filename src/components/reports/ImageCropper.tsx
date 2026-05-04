@@ -154,7 +154,7 @@ export function ImageCropper({
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={busy}
+              disabled={busy || !completedCrop || completedCrop.width < MIN_CROP_SIDE || completedCrop.height < MIN_CROP_SIDE}
               className="text-xs text-white bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded disabled:opacity-40"
             >
               {busy ? 'Working…' : 'Confirm crop'}
