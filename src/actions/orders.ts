@@ -134,3 +134,35 @@ export async function deleteOrder(id: string, reportId: string): Promise<void> {
   revalidatePath(`/reports/${reportId}`)
   if (order?.client_id) revalidatePath(`/clients/${order.client_id}`)
 }
+
+export async function assignOrdersToClient(
+  orderIds: string[],
+  clientId: string,
+  reportId: string
+): Promise<{ updatedCount: number }> {
+  if (orderIds.length === 0) return { updatedCount: 0 }
+  const supabase = await createClient()
+
+  // Ensure the report_clients row exists so commission % defaults are in place.
+  await supabase
+    .from('report_clients')
+    .upsert(
+      { report_id: reportId, client_id: clientId, commission_percent: DEFAULT_COMMISSION_PERCENT },
+      { onConflict: 'report_id,client_id', ignoreDuplicates: true }
+    )
+
+  // Defensive: only update orders that are still unassigned, so concurrent
+  // assignments from another tab don't overwrite a different client.
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ client_id: clientId })
+    .in('id', orderIds)
+    .is('client_id', null)
+    .select('id')
+
+  if (error) throw error
+
+  revalidatePath(`/reports/${reportId}`)
+  revalidatePath(`/clients/${clientId}`)
+  return { updatedCount: data?.length ?? 0 }
+}
