@@ -9,8 +9,26 @@ type ImageInput = { base64: string; mimeType: string }
 export async function parseImages(
   images: ImageInput[]
 ): Promise<{ orders: ParsedOrder[]; failedChunkCount: number }> {
-  const { orders, failedChunks } = await parseImagesWithGemini(images)
-  return { orders, failedChunkCount: failedChunks.length }
+  const { orders, failures } = await parseImagesWithGemini(images)
+  return { orders, failedChunkCount: failures.length }
+}
+
+export async function parseImage(
+  image: ImageInput
+): Promise<{ orders: ParsedOrder[]; error: string | null }> {
+  try {
+    const { orders, failures } = await parseImagesWithGemini([image])
+    if (failures.length > 0) {
+      const message = failures[0].message
+      console.error('[parseImage] failed:', message)
+      return { orders: [], error: message }
+    }
+    return { orders, error: null }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Unknown error'
+    console.error('[parseImage] threw:', message, e)
+    return { orders: [], error: message }
+  }
 }
 
 export async function resolveStatusId(statusName: string): Promise<number> {

@@ -33,17 +33,19 @@ export function parseGeminiResponse(raw: string): ParsedOrder[] {
   }
 }
 
+export type ChunkFailure = { chunkIndex: number; message: string }
+
 export async function parseImagesWithGemini(
   imageFiles: { base64: string; mimeType: string }[]
-): Promise<{ orders: ParsedOrder[]; failedChunks: number[] }> {
+): Promise<{ orders: ParsedOrder[]; failures: ChunkFailure[] }> {
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error('GEMINI_API_KEY is not configured')
 
   const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   const prompt = buildGeminiPrompt()
   const allOrders: ParsedOrder[] = []
-  const failedChunks: number[] = []
+  const failures: ChunkFailure[] = []
 
   for (let i = 0; i < imageFiles.length; i += CHUNK_SIZE) {
     const chunk = imageFiles.slice(i, i + CHUNK_SIZE)
@@ -55,10 +57,12 @@ export async function parseImagesWithGemini(
       ]
       const result = await model.generateContent(parts)
       allOrders.push(...parseGeminiResponse(result.response.text()))
-    } catch {
-      failedChunks.push(chunkIndex)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      console.error('[parseImagesWithGemini] chunk', chunkIndex, 'failed:', message, e)
+      failures.push({ chunkIndex, message })
     }
   }
 
-  return { orders: allOrders, failedChunks }
+  return { orders: allOrders, failures }
 }
