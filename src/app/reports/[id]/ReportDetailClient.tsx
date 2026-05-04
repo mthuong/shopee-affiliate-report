@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ImageUploader } from '@/components/reports/ImageUploader'
 import { PendingOrdersReview, type EditableOrder } from '@/components/reports/PendingOrdersReview'
 import { UploadQueue, type QueueItem } from '@/components/reports/UploadQueue'
@@ -18,7 +19,7 @@ type Props = {
 
 export function ReportDetailClient({ reportId, initialOrders, statuses, clients }: Props) {
   const { showToast } = useToast()
-  const [orders, setOrders] = useState(initialOrders)
+  const router = useRouter()
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [pendingOrders, setPendingOrders] = useState<EditableOrder[]>([])
   const [showAddModal, setShowAddModal] = useState(false)
@@ -95,18 +96,10 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
             statuses={statuses}
             onChange={onChangeOrder}
             onRemove={onRemoveOrder}
-            onSaved={(saved, skipped) => {
+            onSaved={(_saved, skipped) => {
               setPendingOrders([])
               clearQueue()
-              const existingIds = new Set(orders.map((o) => `${o.order_id}:${o.report_id}`))
-              const newOrders = saved
-                .filter((o) => !existingIds.has(`${o.order_id}:${o.report_id}`))
-                .map((o) => ({
-                  ...o,
-                  order_statuses: statuses.find((s) => s.id === o.status_id) ?? { id: o.status_id, name: '' },
-                  clients: null,
-                }))
-              setOrders((prev) => [...prev, ...newOrders])
+              router.refresh()
               showToast(skipped > 0 ? `Saved. ${skipped} duplicate(s) skipped.` : 'Orders saved')
             }}
             onDiscard={() => {
@@ -125,16 +118,16 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
           </button>
         </div>
         <OrdersTable
-            orders={orders}
-            reportId={reportId}
-            statuses={statuses}
-            clients={clients}
-            onDeleteSuccess={(id) => setOrders((prev) => prev.filter((o) => o.id !== id))}
-            onEditSuccess={(updated) => setOrders((prev) => prev.map((o) => o.id === updated.id ? updated : o))}
-          />
+          orders={initialOrders}
+          reportId={reportId}
+          statuses={statuses}
+          clients={clients}
+          onDeleteSuccess={() => router.refresh()}
+          onEditSuccess={() => router.refresh()}
+        />
       </div>
 
-      <OrderModal open={showAddModal} onClose={() => setShowAddModal(false)} onSaved={(newOrder) => { setOrders((prev) => [...prev, newOrder]); setShowAddModal(false) }} reportId={reportId} statuses={statuses} clients={clients} />
+      <OrderModal open={showAddModal} onClose={() => setShowAddModal(false)} onSaved={() => { router.refresh(); setShowAddModal(false) }} reportId={reportId} statuses={statuses} clients={clients} />
     </div>
   )
 }
