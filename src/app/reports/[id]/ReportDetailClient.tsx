@@ -29,11 +29,15 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
     setIsParsing(true)
     try {
       const images = await Promise.all(
-        pendingFiles.map(async (f) => {
-          const buffer = await f.arrayBuffer()
-          const base64 = Buffer.from(buffer).toString('base64')
-          return { base64, mimeType: f.type }
-        })
+        pendingFiles.map(
+          (f) =>
+            new Promise<{ base64: string; mimeType: string }>((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve({ base64: (reader.result as string).split(',')[1], mimeType: f.type })
+              reader.onerror = reject
+              reader.readAsDataURL(f)
+            })
+        )
       )
       const { orders: parsedOrders, failedChunkCount } = await parseImages(images)
       if (failedChunkCount > 0) showToast(`${failedChunkCount} batch(es) failed to parse`, 'error')

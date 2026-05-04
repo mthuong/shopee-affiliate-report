@@ -33,18 +33,23 @@ export function PendingOrdersReview({ reportId, initialOrders, statuses, onSaved
     if (orders.length === 0) return
     setSaving(true)
     try {
-      const resolved = await Promise.all(
-        orders.map(async (o) => ({
-          report_id: reportId,
-          order_id: o.order_id,
-          product_name: o.product_name,
-          status_id: await resolveStatusId(o.status_name),
-          commission: o.commission_vnd,
-          ordered_at: new Date(o.ordered_at).toISOString(),
-          client_id: null,
-          is_manual: false,
-        }))
-      )
+      // Deduplicate status names to avoid race conditions in concurrent resolveStatusId calls
+      const uniqueStatuses = [...new Set(orders.map((o) => o.status_name))]
+      const statusIdMap = new Map<string, number>()
+      for (const name of uniqueStatuses) {
+        statusIdMap.set(name, await resolveStatusId(name))
+      }
+
+      const resolved = orders.map((o) => ({
+        report_id: reportId,
+        order_id: o.order_id,
+        product_name: o.product_name,
+        status_id: statusIdMap.get(o.status_name)!,
+        commission: o.commission_vnd,
+        ordered_at: new Date(o.ordered_at).toISOString(),
+        client_id: null,
+        is_manual: false,
+      }))
       const { saved, skipped } = await createOrders(resolved)
       onSaved(saved, skipped)
     } catch (e: any) {
