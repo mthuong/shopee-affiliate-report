@@ -13,14 +13,23 @@ import {
   type ModelName,
 } from '@/lib/gemini/model-cascade'
 import type { ParsedOrder } from '@/lib/supabase/types'
+import { ImageCropper } from './ImageCropper'
 
-export type QueueStatus = 'queued' | 'throttled' | 'parsing' | 'done' | 'failed'
+export type QueueStatus =
+  | 'needs-crop'
+  | 'queued'
+  | 'throttled'
+  | 'parsing'
+  | 'done'
+  | 'failed'
 
 export type QueueItem = {
   id: string
   file: File
   previewUrl: string
   status: QueueStatus
+  cropped?: { base64: string; mimeType: string }
+  croppedPreviewUrl?: string
   orders: ParsedOrder[]
   error: string | null
   model?: ModelName
@@ -49,9 +58,32 @@ function readFileAsBase64(file: File): Promise<{ base64: string; mimeType: strin
 export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }: Props) {
   const inFlight = useRef(false)
   const cascadeRef = useRef<CascadeState>(createCascadeState())
-  // Re-render trigger when cascadeRef.current.cooled mutates. Refs aren't reactive,
-  // so the worker bumps this state to force a re-render that picks up the new size.
   const [cooledTick, setCooledTick] = useState(0)
+
+  // ID of the item currently shown in the cropper, or null if no modal is open.
+  const [cropTargetId, setCropTargetId] = useState<string | null>(null)
+  // True while we're auto-opening the next needs-crop item; user-initiated
+  // close suppresses auto-open until they add more files or click Crop.
+  const [autoOpenSuppressed, setAutoOpenSuppressed] = useState(false)
+
+  // Auto-open the first needs-crop item when none is currently being cropped.
+  // Synchronizing modal-open state with the externally-controlled `items` prop
+  // requires setState inside an effect — this is the intended pattern here.
+  useEffect(() => {
+    if (cropTargetId !== null) return
+    if (autoOpenSuppressed) return
+    const next = items.find((i) => i.status === 'needs-crop')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (next) setCropTargetId(next.id)
+  }, [items, cropTargetId, autoOpenSuppressed])
+
+  // Reset suppression once every needs-crop item has been resolved.
+  useEffect(() => {
+    if (!autoOpenSuppressed) return
+    const anyNeedsCrop = items.some((i) => i.status === 'needs-crop')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!anyNeedsCrop) setAutoOpenSuppressed(false)
+  }, [items, autoOpenSuppressed])
 
   useEffect(() => {
     if (inFlight.current) return
@@ -60,12 +92,13 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
 
     inFlight.current = true
     const id = next.id
-    const file = next.file
     ;(async () => {
       try {
-        // Pre-load the image bytes once; reused across cascade attempts.
-        const image = await readFileAsBase64(file)
-
+        // Cropped bytes are populated by the ImageCropper. When the cropping
+        // flow is disabled (flag off), the item lands in 'queued' without
+        // cropped bytes — fall back to reading the original file directly.
+        const cropped: { base64: string; mimeType: string } =
+          next.cropped ?? (await readFileAsBase64(next.file))
         while (true) {
           const choice = pickNextModel(cascadeRef.current)
           if (!choice) {
@@ -81,18 +114,17 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
           onUpdate(id, { status: 'parsing' })
           markCalled(cascadeRef.current, choice.model)
 
-          const { orders, error, rateLimited } = await parseImage(image, choice.model)
+          const { orders, error, rateLimited } = await parseImage(cropped, choice.model)
 
           if (rateLimited) {
             console.warn('[UploadQueue]', choice.model, 'rate-limited; cascading')
             markCooled(cascadeRef.current, choice.model)
-            // Bump tick so the header counter re-renders with the new cooled size.
             setCooledTick((n) => n + 1)
             continue
           }
 
           if (error) {
-            console.error('[UploadQueue] parse failed for', file.name, '—', error)
+            console.error('[UploadQueue] parse failed for', next.file.name, '—', error)
             onUpdate(id, { status: 'failed', error })
             return
           }
@@ -103,7 +135,7 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
         }
       } catch (e) {
         const message = e instanceof Error ? e.message : 'Unknown error'
-        console.error('[UploadQueue] threw for', file.name, '—', message, e)
+        console.error('[UploadQueue] threw for', next.file.name, '—', message, e)
         onUpdate(id, { status: 'failed', error: message })
       } finally {
         inFlight.current = false
@@ -115,17 +147,27 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
 
   const failedCount = items.filter((i) => i.status === 'failed').length
   const doneCount = items.filter((i) => i.status === 'done').length
-  const activeCount = items.filter((i) => i.status === 'parsing' || i.status === 'throttled' || i.status === 'queued').length
+  const activeCount = items.filter(
+    (i) => i.status === 'parsing' || i.status === 'throttled' || i.status === 'queued' || i.status === 'needs-crop'
+  ).length
   const allDone = activeCount === 0
 
-  // Reading the ref during render is intentional. The truth source is
-  // `cascadeRef.current.cooled` (mutated by the worker), and `cooledTick`
-  // is the local re-render trigger that ensures this read picks up the
-  // new value. Without the void, ESLint thinks `cooledTick` is unused.
   void cooledTick
   // eslint-disable-next-line react-hooks/refs
   const availableCount = MODEL_PREFERENCE.length - cascadeRef.current.cooled.size
   const allExhausted = availableCount === 0
+
+  const cropTarget = cropTargetId ? items.find((i) => i.id === cropTargetId) : null
+  const totalCropping = items.filter(
+    (i) => i.status === 'needs-crop' || (i.id === cropTargetId)
+  ).length
+  const cropIndex = (() => {
+    if (!cropTarget) return 0
+    const order = items
+      .filter((i) => i.status === 'needs-crop' || i.id === cropTargetId)
+      .map((i) => i.id)
+    return Math.max(1, order.indexOf(cropTarget.id) + 1)
+  })()
 
   return (
     <div className="mt-4 border border-gray-800 rounded-xl p-4">
@@ -144,18 +186,66 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
       )}
       <div className="space-y-2">
         {items.map((item) => (
-          <QueueRow key={item.id} item={item} onRetry={() => onUpdate(item.id, { status: 'queued', error: null })} onRemove={() => onRemove(item.id)} />
+          <QueueRow
+            key={item.id}
+            item={item}
+            onRetry={() => onUpdate(item.id, { status: 'queued', error: null })}
+            onRemove={() => onRemove(item.id)}
+            onCrop={() => setCropTargetId(item.id)}
+          />
         ))}
       </div>
+      {cropTarget && (
+        <ImageCropper
+          file={cropTarget.file}
+          currentIndex={cropIndex}
+          totalCount={Math.max(totalCropping, 1)}
+          onConfirm={(result) => {
+            const objectUrl = URL.createObjectURL(result.blob)
+            onUpdate(cropTarget.id, {
+              status: 'queued',
+              cropped: { base64: result.base64, mimeType: result.mimeType },
+              croppedPreviewUrl: objectUrl,
+            })
+            setCropTargetId(null)
+          }}
+          onUseFullImage={(full) => {
+            onUpdate(cropTarget.id, {
+              status: 'queued',
+              cropped: full,
+            })
+            setCropTargetId(null)
+          }}
+          onClose={() => {
+            setCropTargetId(null)
+            setAutoOpenSuppressed(true)
+          }}
+          onRemove={() => {
+            setCropTargetId(null)
+            onRemove(cropTarget.id)
+          }}
+        />
+      )}
     </div>
   )
 }
 
-function QueueRow({ item, onRetry, onRemove }: { item: QueueItem; onRetry: () => void; onRemove: () => void }) {
+function QueueRow({
+  item,
+  onRetry,
+  onRemove,
+  onCrop,
+}: {
+  item: QueueItem
+  onRetry: () => void
+  onRemove: () => void
+  onCrop: () => void
+}) {
+  const thumb = item.croppedPreviewUrl ?? item.previewUrl
   return (
     <div className="flex items-center gap-3 bg-gray-900/40 rounded-lg p-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={item.previewUrl} alt="" className="w-12 h-12 object-cover rounded border border-gray-800 flex-shrink-0" />
+      <img src={thumb} alt="" className="w-12 h-12 object-cover rounded border border-gray-800 flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-xs text-gray-300 truncate">{item.file.name}</p>
         <p className="text-[11px] text-gray-500">{(item.file.size / 1024).toFixed(0)} KB</p>
@@ -165,6 +255,9 @@ function QueueRow({ item, onRetry, onRemove }: { item: QueueItem; onRetry: () =>
       </div>
       <StatusBadge item={item} />
       <div className="flex items-center gap-1">
+        {item.status === 'needs-crop' && (
+          <button onClick={onCrop} className="text-xs text-orange-400 hover:text-orange-300 px-2 py-1 rounded">Crop</button>
+        )}
         {item.status === 'failed' && (
           <button onClick={onRetry} className="text-xs text-orange-400 hover:text-orange-300 px-2 py-1 rounded">Retry</button>
         )}
@@ -178,6 +271,8 @@ function QueueRow({ item, onRetry, onRemove }: { item: QueueItem; onRetry: () =>
 
 function StatusBadge({ item }: { item: QueueItem }) {
   switch (item.status) {
+    case 'needs-crop':
+      return <span className="text-xs text-orange-300">✂ Needs crop</span>
     case 'queued':
       return <span className="text-xs text-gray-500">⏳ Queued</span>
     case 'throttled':
