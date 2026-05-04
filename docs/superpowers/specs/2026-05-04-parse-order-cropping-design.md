@@ -15,6 +15,32 @@ The current parser (`src/lib/gemini/parse-images.ts`) sends raw images to Gemini
 1. **Drop partial orders silently.** When an order's ID is not readable, no row is produced. Dedup on `(report_id, order_id)` already handles the case where the same order appears complete in another screenshot the user uploaded.
 2. **Add a user-confirmed crop step before parsing.** The user trims each image to the area containing complete orders, reducing the chance Gemini sees partial cards in the first place.
 
+## Feature flag
+
+The cropping flow is gated behind a public env var:
+
+```
+NEXT_PUBLIC_ENABLE_CROP_CONFIRM=true   # default; new flow active
+NEXT_PUBLIC_ENABLE_CROP_CONFIRM=false  # disabled; pre-feature behavior
+```
+
+Read once at module scope:
+
+```ts
+// src/lib/utils/feature-flags.ts
+export const CROP_CONFIRM_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_CROP_CONFIRM !== 'false'
+```
+
+`ReportDetailClient` is the only consumer:
+
+- **`true`** (default): newly added files start as `needs-crop`; the cropper auto-opens; worker only proceeds after the user confirms.
+- **`false`**: newly added files start as `queued` with `cropped` populated directly from the original file's bytes (the existing pre-feature behavior). The cropper modal is never rendered. The `needs-crop` status, the `Crop` button, and the `<ImageCropper>` import all become dead code under this flag — kept in the bundle but never reached.
+
+The parser hardening (prompt rewrite + regex filter) is **not** behind the flag — it's a pure improvement that benefits both code paths and has no UX cost to revert.
+
+To revert the cropping UX: set `NEXT_PUBLIC_ENABLE_CROP_CONFIRM=false` in the deploy environment. No code change or redeploy of source needed.
+
 ## Non-goals
 
 - Stitching across screenshots (merging the bottom of image N with the top of image N+1).
@@ -192,6 +218,7 @@ typeof o.order_id === 'string'
 
 - `src/components/reports/ImageCropper.tsx`
 - `src/lib/utils/crop-image.ts`
+- `src/lib/utils/feature-flags.ts`
 - `src/components/reports/__tests__/ImageCropper.test.tsx`
 - `src/lib/utils/__tests__/crop-image.test.ts`
 
@@ -205,7 +232,7 @@ typeof o.order_id === 'string'
   - Per-row **Crop** button while status is `needs-crop`.
   - `StatusBadge`: new branch `needs-crop → "✂ Needs crop"`.
 - `src/app/reports/[id]/ReportDetailClient.tsx`
-  - Initial status of newly-added files becomes `'needs-crop'`.
+  - Initial status of newly-added files: `'needs-crop'` if `CROP_CONFIRM_ENABLED`, else `'queued'` with `cropped` set from the file's bytes (pre-feature behavior).
   - Revoke `croppedPreviewUrl` alongside `previewUrl` on remove/clear.
 - `src/lib/gemini/parse-images.ts`
   - `buildGeminiPrompt` rewrite.
