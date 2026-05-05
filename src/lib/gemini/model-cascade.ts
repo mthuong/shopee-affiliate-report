@@ -1,7 +1,7 @@
 export type ModelName =
   | 'gemini-2.5-flash'
   | 'gemini-2.5-flash-lite'
-  | 'gemini-3-flash'
+  | 'gemini-3-flash-preview'
   | 'gemini-3.1-flash-lite-preview'
 
 export type ModelInfo = {
@@ -17,7 +17,7 @@ export type ModelInfo = {
 export const MODEL_PREFERENCE: ModelInfo[] = [
   { name: 'gemini-2.5-flash',                minIntervalMs: 13000, shortName: '2.5' },
   { name: 'gemini-2.5-flash-lite',           minIntervalMs:  7000, shortName: '2.5-lite' },
-  { name: 'gemini-3-flash',                  minIntervalMs: 13000, shortName: '3' },
+  { name: 'gemini-3-flash-preview',                  minIntervalMs: 13000, shortName: '3' },
   { name: 'gemini-3.1-flash-lite-preview',   minIntervalMs:  5000, shortName: '3.1-lite' },
 ]
 
