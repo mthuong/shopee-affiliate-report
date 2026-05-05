@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { ImageCropper } from '../ImageCropper'
 
@@ -47,6 +48,54 @@ beforeAll(() => {
 })
 
 describe('ImageCropper', () => {
+  it('keeps the displayed image URL alive under StrictMode', () => {
+    // StrictMode runs effect setup → cleanup → setup again on initial mount.
+    // If URL creation lives in render/useMemo, the cleanup revokes the URL
+    // that the DOM still references → broken image, alt text shows.
+    // This test fails on the broken pattern and passes after the URL
+    // lifecycle is moved into a single useEffect.
+    const liveUrls = new Set<string>()
+    let counter = 0
+    const origCreate = URL.createObjectURL
+    const origRevoke = URL.revokeObjectURL
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: jest.fn(() => {
+        const url = `blob:mock-${counter++}`
+        liveUrls.add(url)
+        return url
+      }),
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: jest.fn((url: string) => {
+        liveUrls.delete(url)
+      }),
+    })
+    try {
+      render(
+        <StrictMode>
+          <ImageCropper
+            file={makeFile()}
+            currentIndex={1}
+            totalCount={1}
+            onConfirm={jest.fn()}
+            onUseFullImage={jest.fn()}
+            onClose={jest.fn()}
+            onRemove={jest.fn()}
+          />
+        </StrictMode>
+      )
+      const img = screen.getByAltText(/Image being cropped/i) as HTMLImageElement
+      const src = img.getAttribute('src')
+      expect(src).toBeTruthy()
+      expect(liveUrls.has(src!)).toBe(true)
+    } finally {
+      Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: origCreate })
+      Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: origRevoke })
+    }
+  })
+
   it('renders header with current/total count', () => {
     render(
       <ImageCropper

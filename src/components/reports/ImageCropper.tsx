@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import { cropFileToBase64, readFileAsCropped } from '@/lib/utils/crop-image'
@@ -26,8 +26,13 @@ export function ImageCropper({
   onClose,
   onRemove,
 }: Props) {
-  const objectUrl = useMemo(() => URL.createObjectURL(file), [file])
+  // URL.createObjectURL must be paired with revokeObjectURL inside the SAME
+  // effect, not split across useMemo + useEffect. React StrictMode (and Next.js
+  // dev defaults to it) intentionally runs effect setup → cleanup → setup on
+  // mount; the split pattern revokes the URL the DOM <img> still references,
+  // and the second image in a batch reliably races to a 404 / alt-text fallback.
   const imgRef = useRef<HTMLImageElement | null>(null)
+  const [objectUrl, setObjectUrl] = useState<string | null>(null)
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
     x: 0,
@@ -38,7 +43,12 @@ export function ImageCropper({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null)
   const [busy, setBusy] = useState(false)
 
-  useEffect(() => () => URL.revokeObjectURL(objectUrl), [objectUrl])
+  useEffect(() => {
+    const url = URL.createObjectURL(file)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setObjectUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -116,22 +126,24 @@ export function ImageCropper({
           </button>
         </header>
         <div className="flex-1 overflow-auto bg-black/60 flex items-center justify-center p-4">
-          <ReactCrop
-            crop={crop}
-            onChange={(_px, percent) => setCrop(percent)}
-            onComplete={(px) => setCompletedCrop(px)}
-            keepSelection
-            minWidth={MIN_CROP_SIDE}
-            minHeight={MIN_CROP_SIDE}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={objectUrl}
-              alt="Image being cropped"
-              onLoad={onImageLoad}
-              style={{ maxHeight: '70vh', display: 'block' }}
-            />
-          </ReactCrop>
+          {objectUrl && (
+            <ReactCrop
+              crop={crop}
+              onChange={(_px, percent) => setCrop(percent)}
+              onComplete={(px) => setCompletedCrop(px)}
+              keepSelection
+              minWidth={MIN_CROP_SIDE}
+              minHeight={MIN_CROP_SIDE}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={objectUrl}
+                alt="Image being cropped"
+                onLoad={onImageLoad}
+                style={{ maxHeight: '70vh', display: 'block' }}
+              />
+            </ReactCrop>
+          )}
         </div>
         <footer className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-800">
           <button
