@@ -13,19 +13,24 @@ jest.mock('react-image-crop', () => ({
   makeAspectCrop: (c: unknown) => c,
 }))
 
-// Mock the canvas helper so confirm doesn't depend on canvas APIs.
-jest.mock('@/lib/utils/crop-image', () => ({
-  __esModule: true,
-  cropFileToBase64: jest.fn(async () => ({
-    base64: 'CROPPED_BASE64',
-    mimeType: 'image/jpeg',
-    blob: new Blob(['x'], { type: 'image/jpeg' }),
-  })),
-  readFileAsCropped: jest.fn(async () => ({
-    base64: 'FULL_BASE64',
-    mimeType: 'image/jpeg',
-  })),
-}))
+// Mock the canvas-using helpers so confirm doesn't depend on canvas APIs;
+// pass through the pure helpers (clampCrop, scaleDisplayCropToNatural).
+jest.mock('@/lib/utils/crop-image', () => {
+  const actual = jest.requireActual('@/lib/utils/crop-image')
+  return {
+    __esModule: true,
+    ...actual,
+    cropFileToBase64: jest.fn(async () => ({
+      base64: 'CROPPED_BASE64',
+      mimeType: 'image/jpeg',
+      blob: new Blob(['x'], { type: 'image/jpeg' }),
+    })),
+    readFileAsCropped: jest.fn(async () => ({
+      base64: 'FULL_BASE64',
+      mimeType: 'image/jpeg',
+    })),
+  }
+})
 
 function makeFile(): File {
   return new File(['fake'], 'shot.png', { type: 'image/png' })
@@ -126,11 +131,14 @@ describe('ImageCropper', () => {
     )
     // jsdom may not fire onLoad for the <img> with a stubbed object URL,
     // so trigger it explicitly to set imgRef.current before confirming.
-    // jsdom also reports naturalWidth/Height as 0; stub them so the min-size
-    // guard in handleConfirm doesn't reject the crop.
+    // jsdom reports naturalWidth/Height AND width/height as 0; stub all four
+    // (display dims gate the MIN_CROP_SIDE check; natural dims feed the
+    // display→natural scale conversion).
     const img = screen.getByAltText(/Image being cropped/i) as HTMLImageElement
     Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 800 })
     Object.defineProperty(img, 'naturalHeight', { configurable: true, value: 600 })
+    Object.defineProperty(img, 'width', { configurable: true, value: 400 })
+    Object.defineProperty(img, 'height', { configurable: true, value: 300 })
     fireEvent.load(img)
     fireEvent.click(screen.getByRole('button', { name: /confirm crop/i }))
     await waitFor(() =>
@@ -138,6 +146,38 @@ describe('ImageCropper', () => {
         expect.objectContaining({ base64: 'CROPPED_BASE64', mimeType: 'image/jpeg' })
       )
     )
+  })
+
+  it('passes the natural-pixel crop to cropFileToBase64 (not display pixels)', async () => {
+    // Image is natively 800×600, displayed at 400×300 (2× scale-down).
+    // Without conversion, cropFileToBase64 would receive {0,0,400,300} and
+    // crop the top-left half of the natural image. The fix scales display→
+    // natural before the canvas, so it must receive {0,0,800,600}.
+    const { cropFileToBase64 } = jest.requireMock('@/lib/utils/crop-image') as {
+      cropFileToBase64: jest.Mock
+    }
+    cropFileToBase64.mockClear()
+    render(
+      <ImageCropper
+        file={makeFile()}
+        currentIndex={1}
+        totalCount={1}
+        onConfirm={jest.fn()}
+        onUseFullImage={jest.fn()}
+        onClose={jest.fn()}
+        onRemove={jest.fn()}
+      />
+    )
+    const img = screen.getByAltText(/Image being cropped/i) as HTMLImageElement
+    Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 800 })
+    Object.defineProperty(img, 'naturalHeight', { configurable: true, value: 600 })
+    Object.defineProperty(img, 'width', { configurable: true, value: 400 })
+    Object.defineProperty(img, 'height', { configurable: true, value: 300 })
+    fireEvent.load(img)
+    fireEvent.click(screen.getByRole('button', { name: /confirm crop/i }))
+    await waitFor(() => expect(cropFileToBase64).toHaveBeenCalled())
+    const passedCrop = cropFileToBase64.mock.calls[0][1]
+    expect(passedCrop).toMatchObject({ x: 0, y: 0, width: 800, height: 600 })
   })
 
   it('calls onUseFullImage with original bytes when "Use full image" is clicked', async () => {

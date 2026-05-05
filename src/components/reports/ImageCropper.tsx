@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
-import { cropFileToBase64, readFileAsCropped } from '@/lib/utils/crop-image'
+import {
+  cropFileToBase64,
+  readFileAsCropped,
+  scaleDisplayCropToNatural,
+} from '@/lib/utils/crop-image'
 
 const MIN_CROP_SIDE = 32
 
@@ -60,13 +64,16 @@ export function ImageCropper({
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     imgRef.current = e.currentTarget
-    const { naturalWidth, naturalHeight } = e.currentTarget
+    // Initialize completedCrop in DISPLAYED pixels — same coordinate space
+    // react-image-crop's onComplete uses. handleConfirm scales to natural
+    // pixels at the cropFileToBase64 boundary.
+    const { width, height } = e.currentTarget
     setCompletedCrop({
       unit: 'px',
       x: 0,
       y: 0,
-      width: naturalWidth,
-      height: naturalHeight,
+      width,
+      height,
     })
   }
 
@@ -78,13 +85,21 @@ export function ImageCropper({
       unit: 'px',
       x: 0,
       y: 0,
-      width: img.naturalWidth,
-      height: img.naturalHeight,
+      width: img.width,
+      height: img.height,
     }
     if (px.width < MIN_CROP_SIDE || px.height < MIN_CROP_SIDE) return
+    const naturalPx: PixelCrop = {
+      unit: 'px',
+      ...scaleDisplayCropToNatural(
+        px,
+        { width: img.width, height: img.height },
+        { width: img.naturalWidth, height: img.naturalHeight },
+      ),
+    }
     setBusy(true)
     try {
-      const result = await cropFileToBase64(file, px)
+      const result = await cropFileToBase64(file, naturalPx)
       onConfirm(result)
     } catch (err) {
       console.error('[ImageCropper] crop failed', err)

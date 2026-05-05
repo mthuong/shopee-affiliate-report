@@ -1,5 +1,28 @@
 export type PixelCrop = { x: number; y: number; width: number; height: number }
 
+// react-image-crop reports completedCrop in *displayed* image pixels (the
+// rendered <img>'s on-screen size). The canvas crop must run in *natural*
+// pixels (the source image's intrinsic size). When the display is scaled
+// down (e.g. a 1080×1920 screenshot shown in a 70vh modal at 394×700),
+// passing display px straight to drawImage's source rect crops a tiny
+// region from the top-left of the natural image — both the Gemini upload
+// and the thumbnail then show the wrong content.
+export function scaleDisplayCropToNatural(
+  displayCrop: PixelCrop,
+  display: { width: number; height: number },
+  natural: { width: number; height: number },
+): PixelCrop {
+  if (display.width === 0 || display.height === 0) return displayCrop
+  const scaleX = natural.width / display.width
+  const scaleY = natural.height / display.height
+  return {
+    x: displayCrop.x * scaleX,
+    y: displayCrop.y * scaleY,
+    width: displayCrop.width * scaleX,
+    height: displayCrop.height * scaleY,
+  }
+}
+
 export function clampCrop(
   crop: PixelCrop,
   naturalWidth: number,
