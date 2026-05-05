@@ -12,6 +12,7 @@ import { AssignClientPopup } from '@/components/orders/AssignClientPopup'
 import { SelectActionBar } from '@/components/orders/SelectActionBar'
 import { assignOrdersToClient } from '@/actions/orders'
 import { useToast } from '@/components/ui/Toast'
+import { CROP_CONFIRM_ENABLED } from '@/lib/utils/feature-flags'
 import type { OrderWithStatus, OrderStatus, Client, ParsedOrder } from '@/lib/supabase/types'
 
 type Props = {
@@ -39,7 +40,9 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
       id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
       file,
       previewUrl: URL.createObjectURL(file),
-      status: 'queued',
+      // Flag on: pause for cropper. Flag off: go straight to queued — the
+      // worker reads the original file as a fallback when cropped is missing.
+      status: CROP_CONFIRM_ENABLED ? 'needs-crop' : 'queued',
       orders: [],
       error: null,
     }))
@@ -53,14 +56,20 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
   const removeItem = useCallback((id: string) => {
     setQueue((prev) => {
       const target = prev.find((i) => i.id === id)
-      if (target) URL.revokeObjectURL(target.previewUrl)
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl)
+        if (target.croppedPreviewUrl) URL.revokeObjectURL(target.croppedPreviewUrl)
+      }
       return prev.filter((i) => i.id !== id)
     })
   }, [])
 
   const clearQueue = useCallback(() => {
     setQueue((prev) => {
-      for (const i of prev) URL.revokeObjectURL(i.previewUrl)
+      for (const i of prev) {
+        URL.revokeObjectURL(i.previewUrl)
+        if (i.croppedPreviewUrl) URL.revokeObjectURL(i.croppedPreviewUrl)
+      }
       return []
     })
   }, [])
@@ -151,7 +160,10 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
   useEffect(() => {
     return () => {
       setQueue((prev) => {
-        for (const i of prev) URL.revokeObjectURL(i.previewUrl)
+        for (const i of prev) {
+          URL.revokeObjectURL(i.previewUrl)
+          if (i.croppedPreviewUrl) URL.revokeObjectURL(i.croppedPreviewUrl)
+        }
         return prev
       })
     }

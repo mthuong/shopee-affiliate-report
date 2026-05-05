@@ -4,12 +4,20 @@ import type { ModelName } from './model-cascade'
 
 const CHUNK_SIZE = 10
 
-export function buildGeminiPrompt(): string {
-  return `You are an OCR assistant. Extract all Shopee affiliate orders from the provided screenshots.
+// Shopee order codes seen in the wild are 14 uppercase-alphanumeric chars
+// (e.g. 260426S774FDFG, 2604282M8582FA). The 12–16 range is a deliberate
+// buffer in case Shopee tweaks the format slightly. Tight enough to reject
+// hallucinated junk, loose enough not to drop real orders.
+const SHOPEE_ORDER_ID_RE = /^[0-9A-Z]{12,16}$/
 
-For each order found, return a JSON array with objects in this exact format:
+export function buildGeminiPrompt(): string {
+  return `You are an OCR assistant. Extract Shopee affiliate orders from the provided screenshots.
+
+CRITICAL: Only return an order if you can clearly read its "ID đơn đặt hàng:" line. The Shopee order code is alphanumeric, ~14 characters (example: 260426S774FDFG). If the ID is cut off, blurry, partially obscured, or not visible at all, SKIP that order entirely. Never guess, infer, or invent an order ID. Returning fewer accurate orders is better than inventing IDs.
+
+For each order with a readable ID, return a JSON array entry:
 {
-  "order_id": "the Shopee order code (e.g. 2604282M8582FA)",
+  "order_id": "the Shopee order code exactly as shown",
   "product_name": "the product name, or null if not visible",
   "status_name": "the order status text exactly as shown (e.g. Đã hoàn thành, Đã hủy)",
   "commission_vnd": <integer commission amount in VND, no currency symbol>,
@@ -17,7 +25,7 @@ For each order found, return a JSON array with objects in this exact format:
 }
 
 Return ONLY the JSON array. No explanation, no markdown outside the array.
-If no orders are found, return an empty array [].`
+If no orders have readable IDs, return [].`
 }
 
 export function parseGeminiResponse(raw: string): ParsedOrder[] {
@@ -28,10 +36,14 @@ export function parseGeminiResponse(raw: string): ParsedOrder[] {
     if (!Array.isArray(parsed)) return []
     return parsed
       .filter(
-        (o) => typeof o.order_id === 'string' && typeof o.commission_vnd === 'number'
+        (o) =>
+          typeof o.order_id === 'string'
+          && SHOPEE_ORDER_ID_RE.test(o.order_id.trim())
+          && typeof o.commission_vnd === 'number'
       )
       .map((o) => ({
         ...o,
+        order_id: o.order_id.trim(),
         status_name: typeof o.status_name === 'string' ? o.status_name : '',
       }))
   } catch {

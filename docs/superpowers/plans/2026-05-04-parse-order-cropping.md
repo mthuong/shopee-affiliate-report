@@ -310,8 +310,12 @@ describe('clampCrop', () => {
   })
 
   it('rounds fractional values to integers', () => {
+    // Edge-rounding semantics: each edge rounds independently, then width
+    // and height are derived as right - x and bottom - y. For x = round(10.7)
+    // = 11, right = round(111.3) = 111 → width 100. For y = round(20.3) = 20,
+    // bottom = round(220.5) = 221 → height 201.
     const result = clampCrop({ x: 10.7, y: 20.3, width: 100.6, height: 200.2 }, 500, 500)
-    expect(result).toEqual({ x: 11, y: 20, width: 101, height: 200 })
+    expect(result).toEqual({ x: 11, y: 20, width: 100, height: 201 })
   })
 
   it('returns zero-size rect when input is entirely outside bounds', () => {
