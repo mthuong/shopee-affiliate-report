@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx jest *)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npm test *)",
+      "Bash(git commit *)",
+      "Bash(node *)",
+      "Bash(git check-ignore *)",
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "Bash(pnpm test *)",
+      "Bash(git *)",
+      "Bash(npm run *)",
+      "Bash(echo \"EXIT=$?\")"
+    ]
+  }
+}
