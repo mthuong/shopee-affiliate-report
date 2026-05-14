@@ -36,22 +36,24 @@ Edit `.env.local`:
 # Supabase — Project Settings > API
 NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-publishable-key>
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 
 # Gemini — https://aistudio.google.com/
 GEMINI_API_KEY=<your-gemini-api-key>
 ```
 
-> **Note:** The Supabase key is labelled **Publishable key** in the dashboard (formerly "anon key"). The env var name stays `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+> **Note:** The Supabase publishable key is labelled **Publishable key** in the dashboard (formerly "anon key"). The env var name stays `NEXT_PUBLIC_SUPABASE_ANON_KEY`. The **service_role** key is a server-only secret — never commit it or expose it to the browser.
 
-### 3. Apply the database migration
+### 3. Apply the database migrations
 
-In the [Supabase SQL Editor](https://supabase.com/dashboard), open your project and run the contents of:
+In the [Supabase SQL Editor](https://supabase.com/dashboard), open your project and run the migrations in order:
 
 ```
 supabase/migrations/001_initial.sql
+supabase/migrations/002_enable_rls.sql
 ```
 
-This creates the 5 tables (`reports`, `orders`, `order_statuses`, `clients`, `report_clients`) and seeds the order statuses.
+`001` creates the 5 tables (`reports`, `orders`, `order_statuses`, `clients`, `report_clients`) and seeds the order statuses. `002` enables Row-Level Security on every table so the Data API is locked down — all access happens server-side via the `service_role` key.
 
 ### 4. Run the dev server
 
@@ -87,13 +89,14 @@ git push origin main
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase Publishable key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service_role key (mark as **Sensitive**) |
 | `GEMINI_API_KEY` | Your Gemini API key |
 
 4. Click **Deploy**
 
-### 3. Apply the database migration
+### 3. Apply the database migrations
 
-If you haven't already, run `supabase/migrations/001_initial.sql` in the Supabase SQL Editor for your production project.
+If you haven't already, run `supabase/migrations/001_initial.sql` and then `supabase/migrations/002_enable_rls.sql` in the Supabase SQL Editor for your production project.
 
 ---
 
