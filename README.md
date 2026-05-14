@@ -46,14 +46,16 @@ GEMINI_API_KEY=<your-gemini-api-key>
 
 ### 3. Apply the database migrations
 
-In the [Supabase SQL Editor](https://supabase.com/dashboard), open your project and run the migrations in order:
+Either paste each file from `supabase/migrations/` into the [Supabase SQL Editor](https://supabase.com/dashboard) in order, or use the CLI:
 
-```
-supabase/migrations/001_initial.sql
-supabase/migrations/002_enable_rls.sql
+```bash
+brew install supabase/tap/supabase   # one-time
+supabase login                       # browser flow
+supabase link --project-ref <your-project-ref>
+supabase db push
 ```
 
-`001` creates the 5 tables (`reports`, `orders`, `order_statuses`, `clients`, `report_clients`) and seeds the order statuses. `002` enables Row-Level Security on every table so the Data API is locked down — all access happens server-side via the `service_role` key.
+`001_initial.sql` creates the 5 tables (`reports`, `orders`, `order_statuses`, `clients`, `report_clients`) and seeds the order statuses. `20260514120000_enable_rls.sql` enables Row-Level Security on every table so the Data API is locked down — all access happens server-side via the `service_role` key.
 
 ### 4. Run the dev server
 
@@ -96,7 +98,7 @@ git push origin main
 
 ### 3. Apply the database migrations
 
-If you haven't already, run `supabase/migrations/001_initial.sql` and then `supabase/migrations/002_enable_rls.sql` in the Supabase SQL Editor for your production project.
+If you haven't already, run `supabase/migrations/001_initial.sql` and then `supabase/migrations/20260514120000_enable_rls.sql` in the Supabase SQL Editor for your production project.
 
 ---
 
