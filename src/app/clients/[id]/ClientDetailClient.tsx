@@ -55,18 +55,18 @@ export function ClientDetailClient({
     <div>
       <h1 className="text-3xl font-bold mb-6">{client.name}</h1>
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
-          <p className="text-gray-400 text-sm mb-1">Total Commission</p>
-          <p className="text-green-400 text-2xl font-bold">{formatVND(totalCommission)}</p>
+        <div className="bg-raised border border-line rounded-card p-5 text-center">
+          <p className="text-muted text-sm mb-1">Total Commission</p>
+          <p className="text-success text-2xl font-bold">{formatVND(totalCommission)}</p>
         </div>
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
-          <p className="text-gray-400 text-sm mb-1">Total Commission Return</p>
-          <p className="text-orange-400 text-2xl font-bold">{formatVND(totalReturn)}</p>
+        <div className="bg-raised border border-line rounded-card p-5 text-center">
+          <p className="text-muted text-sm mb-1">Total Commission Return</p>
+          <p className="text-accent text-2xl font-bold">{formatVND(totalReturn)}</p>
         </div>
       </div>
 
       {reportList.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No completed orders for this client yet.</p>
+        <p className="text-muted text-center py-12">No completed orders for this client yet.</p>
       ) : (
         <>
           {groups.map(({ report, orders, commissionPercent }) => (
@@ -85,7 +85,7 @@ export function ClientDetailClient({
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="px-4 py-2 text-sm border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                className="px-4 py-2 text-sm border border-line-strong text-muted rounded-control hover:bg-sunken disabled:opacity-50"
               >
                 {loading ? 'Loading…' : `Load more (${reportList.length - loadedUpTo} left)`}
               </button>

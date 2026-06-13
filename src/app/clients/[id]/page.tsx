@@ -28,7 +28,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   return (
     <div>
-      <Link href="/clients" className="text-gray-500 hover:text-gray-300 text-sm mb-6 inline-block">← Clients</Link>
+      <Link href="/clients" className="text-muted hover:text-ink text-sm mb-6 inline-block">← Clients</Link>
       <ClientDetailClient
         client={client}
         clientId={id}
