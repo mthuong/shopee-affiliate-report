@@ -1,63 +1,44 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getClient, getClients } from '@/actions/clients'
-import { getOrdersByClient, getOrderStatuses } from '@/actions/orders'
-import { getReportClient } from '@/actions/report-clients'
-import { getReport } from '@/actions/reports'
-import { calcTotalReturn, COMPLETED_STATUS_ID, DEFAULT_COMMISSION_PERCENT } from '@/lib/utils/commission'
+import { getClient, getClientReportSummary, getClientReportGroups, getClientsBasic } from '@/actions/clients'
+import { getOrderStatuses } from '@/actions/orders'
 import { ClientDetailClient } from './ClientDetailClient'
-import type { Report, OrderWithStatus } from '@/lib/supabase/types'
 
-type OrderWithReport = OrderWithStatus & {
-  reports: { id: string; name: string; created_at: string } | null
-}
+const INITIAL_REPORTS = 2
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [client, ordersRaw, statuses, allClientsData] = await Promise.all([
+
+  const [client, reportList, statuses, allClients] = await Promise.all([
     getClient(id),
-    getOrdersByClient(id),
+    getClientReportSummary(id),
     getOrderStatuses(),
-    getClients(),
+    getClientsBasic(),
   ])
 
   if (!client) notFound()
 
-  const orders = ordersRaw as OrderWithReport[]
+  const totalCommission = reportList.reduce((sum, r) => sum + r.commission, 0)
+  const totalReturn = reportList.reduce((sum, r) => sum + r.return, 0)
 
-  // Group orders by report
-  const reportIdSet = [...new Set(
-    orders.map((o) => o.reports?.id).filter(Boolean) as string[]
-  )]
-
-  const reportGroupsRaw = await Promise.all(
-    reportIdSet.map(async (reportId) => {
-      const [report, rc] = await Promise.all([
-        getReport(reportId),
-        getReportClient(reportId, id),
-      ])
-      if (!report) return null
-      return {
-        report,
-        orders: orders.filter((o) => o.reports?.id === reportId),
-        commissionPercent: rc?.commission_percent ?? DEFAULT_COMMISSION_PERCENT,
-      }
-    })
+  const initialGroups = await getClientReportGroups(
+    id,
+    reportList.slice(0, INITIAL_REPORTS).map((r) => r.report_id)
   )
-
-  const reportGroups = (reportGroupsRaw.filter(Boolean) as { report: Report; orders: typeof orders; commissionPercent: number }[])
-    .sort((a, b) => new Date(b.report.created_at).getTime() - new Date(a.report.created_at).getTime())
-
-  const totalCommission = orders
-    .filter((o) => o.status_id === COMPLETED_STATUS_ID)
-    .reduce((sum, o) => sum + o.commission, 0)
-  const totalReturn = reportGroups.reduce((sum, g) => sum + calcTotalReturn(g.orders.filter((o) => o.status_id === COMPLETED_STATUS_ID), g.commissionPercent), 0)
-  const allClients = allClientsData.map(({ id, name, created_at }) => ({ id, name, created_at }))
 
   return (
     <div>
       <Link href="/clients" className="text-gray-500 hover:text-gray-300 text-sm mb-6 inline-block">← Clients</Link>
-      <ClientDetailClient client={client} reportGroups={reportGroups} statuses={statuses} allClients={allClients} totalCommission={totalCommission} totalReturn={totalReturn} />
+      <ClientDetailClient
+        client={client}
+        clientId={id}
+        reportList={reportList}
+        initialGroups={initialGroups}
+        statuses={statuses}
+        allClients={allClients}
+        totalCommission={totalCommission}
+        totalReturn={totalReturn}
+      />
     </div>
   )
 }
