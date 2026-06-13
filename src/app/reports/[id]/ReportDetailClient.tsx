@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ImageUploader } from '@/components/reports/ImageUploader'
+import { CsvUploader } from '@/components/reports/CsvUploader'
 import { PendingOrdersReview, type EditableOrder } from '@/components/reports/PendingOrdersReview'
 import { UploadQueue, type QueueItem } from '@/components/reports/UploadQueue'
 import { OrdersTable } from '@/components/orders/OrdersTable'
@@ -172,6 +173,10 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
   return (
     <div>
       <ImageUploader onFilesSelected={addFiles} pendingCount={queue.length} />
+
+      <div className="mt-3">
+        <CsvUploader onParsed={appendParsed} />
+      </div>
 
       <UploadQueue items={queue} onUpdate={updateItem} onRemove={removeItem} onClearAll={clearQueue} onParsed={appendParsed} />
 
