@@ -11,7 +11,7 @@ export default async function ClientsPage() {
         <CreateClientButton />
       </div>
       {clients.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No clients yet. Add your first client.</p>
+        <p className="text-muted text-center py-12">No clients yet. Add your first client.</p>
       ) : (
         <div className="space-y-3">
           {clients.map((c) => <ClientCard key={c.id} client={c} />)}

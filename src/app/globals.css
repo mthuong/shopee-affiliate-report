@@ -1,30 +1,61 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Order matters: apple.css sets the :root defaults; classic.css overrides via [data-theme="classic"]. */
+@import "./themes/apple.css";
+@import "./themes/classic.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--surface-page);
+  --color-raised: var(--surface-raised);
+  --color-sunken: var(--surface-sunken);
+  --color-inverse: var(--surface-inverse);
+
+  --color-ink: var(--ink-default);
+  --color-muted: var(--ink-muted);
+  --color-on-accent: var(--ink-on-accent);
+  --color-on-inverse: var(--ink-on-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-on-dark: var(--accent-on-dark);
+
+  --color-line: var(--border-default);
+  --color-line-strong: var(--border-strong);
+
+  --color-success: var(--status-success);
+  --color-danger: var(--status-danger);
+  --color-warning: var(--status-warning);
+
+  --radius-control: var(--rad-control);
+  --radius-card: var(--rad-card);
+  --radius-pill: var(--rad-pill);
+
+  --font-display: var(--family-display);
+  --font-text: var(--family-text);
+
+  --spacing-gutter: var(--gutter);
+  --spacing-card: var(--pad-card);
+  --spacing-row: var(--pad-row);
+  --spacing-section: var(--space-section);
+
+  --shadow-card: var(--elev-card);
+  --shadow-product: var(--elev-product);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Semantic type roles — referenced by the Heading/Text primitives. */
+.type-h1 { font-family: var(--family-display); font-size: 2.5rem;   line-height: 1.1;  font-weight: 600; letter-spacing: var(--type-tracking-tight); }
+.type-h2 { font-family: var(--family-display); font-size: 2rem;     line-height: 1.1;  font-weight: 600; letter-spacing: var(--type-tracking-tight); }
+.type-h3 { font-family: var(--family-display); font-size: 1.5rem;   line-height: 1.2;  font-weight: 600; letter-spacing: var(--type-tracking-tight); }
+.type-h4 { font-family: var(--family-display); font-size: 1.25rem;  line-height: 1.25; font-weight: 600; letter-spacing: var(--type-tracking-tight); }
+.type-body    { font-family: var(--family-text); font-size: 1.0625rem; line-height: 1.47; letter-spacing: var(--type-tracking-body); }
+.type-caption { font-family: var(--family-text); font-size: 0.875rem;  line-height: 1.43; letter-spacing: normal; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-page);
+  color: var(--ink-default);
+  font-family: var(--family-text);
+  min-height: 100vh;
 }
 
 .input {
-  @apply w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500;
+  @apply w-full bg-sunken border border-line rounded-control px-3 py-2 text-ink text-sm focus:outline-none focus:border-accent;
 }

@@ -85,31 +85,31 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
 
   return (
     <>
-      <div className="border border-gray-800 rounded-xl p-5 mb-4">
+      <div className="border border-line rounded-card p-5 mb-4">
         <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
           <div>
-            <h3 className="font-semibold text-orange-400 text-lg">{report.name}</h3>
+            <h3 className="font-semibold text-accent text-lg">{report.name}</h3>
             <div className="text-sm mt-1">
-              <span className="text-gray-400">Subtotal: </span>
-              <span className="text-white">{formatVND(subtotal)}</span>
-              <span className="text-gray-500"> → Return: </span>
-              <span className="text-green-400 font-semibold">{formatVND(totalReturn)}</span>
+              <span className="text-muted">Subtotal: </span>
+              <span className="text-ink">{formatVND(subtotal)}</span>
+              <span className="text-muted"> → Return: </span>
+              <span className="text-success font-semibold">{formatVND(totalReturn)}</span>
             </div>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-gray-400 text-sm">Commission %:</span>
+            <span className="text-muted text-sm">Commission %:</span>
             <input type="number" min={0} max={100} value={percentInput} onChange={(e) => setPercentInput(e.target.value)} className="input w-20 text-center" />
-            <button onClick={handleSavePercent} disabled={savingPercent} className="px-3 py-1.5 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded-lg disabled:opacity-50">
+            <button onClick={handleSavePercent} disabled={savingPercent} className="px-3 py-1.5 text-sm bg-sunken hover:opacity-90 text-ink rounded-control disabled:opacity-50">
               {savingPercent ? '…' : 'Save'}
             </button>
-            <button onClick={handleExport} className="px-3 py-1.5 text-sm bg-green-700 hover:bg-green-600 text-white rounded-lg">📥 Export</button>
+            <button onClick={handleExport} className="px-3 py-1.5 text-sm bg-success hover:opacity-90 text-on-accent rounded-control">📥 Export</button>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-gray-400 border-b border-gray-800 text-left">
+              <tr className="text-muted border-b border-line text-left">
                 <th className="pb-2 pr-4">Order ID</th>
                 <th className="pb-2 pr-4">Product</th>
                 <th className="pb-2 pr-4">Date</th>
@@ -120,16 +120,16 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
             </thead>
             <tbody>
               {orders.length === 0 ? (
-                <tr><td colSpan={6} className="py-4 text-center text-gray-500">No orders</td></tr>
+                <tr><td colSpan={6} className="py-4 text-center text-muted">No orders</td></tr>
               ) : orders.map((o) => (
-                <tr key={o.id} className="group border-b border-gray-800/50 hover:bg-gray-800/40 cursor-pointer" onClick={() => setEditOrder(o)}>
-                  <td className="py-3 pr-4 text-white font-mono text-xs">{o.order_id}</td>
-                  <td className="py-3 pr-4 text-gray-300 max-w-[160px] truncate">{o.product_name ?? '—'}</td>
-                  <td className="py-3 pr-4 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
-                  <td className={`py-3 pr-4 text-xs ${o.status_id === COMPLETED_STATUS_ID ? 'text-green-400' : 'text-red-400'}`}>{o.order_statuses.name}</td>
-                  <td className="py-3 pr-4 text-right text-white">{formatVND(o.commission)}</td>
+                <tr key={o.id} className="group border-b border-line/50 hover:bg-sunken/40 cursor-pointer" onClick={() => setEditOrder(o)}>
+                  <td className="py-3 pr-4 text-ink font-mono text-xs">{o.order_id}</td>
+                  <td className="py-3 pr-4 text-muted max-w-[160px] truncate">{o.product_name ?? '—'}</td>
+                  <td className="py-3 pr-4 text-muted whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
+                  <td className={`py-3 pr-4 text-xs ${o.status_id === COMPLETED_STATUS_ID ? 'text-success' : 'text-danger'}`}>{o.order_statuses.name}</td>
+                  <td className="py-3 pr-4 text-right text-ink">{formatVND(o.commission)}</td>
                   <td className="py-3 text-center">
-                    <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(o) }} className="invisible group-hover:visible text-red-400 hover:text-red-300 p-1">🗑</button>
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(o) }} className="invisible group-hover:visible text-danger hover:opacity-80 p-1">🗑</button>
                   </td>
                 </tr>
               ))}
@@ -137,8 +137,8 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
           </table>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-gray-800">
-          <button onClick={() => setShowAddModal(true)} className="text-sm text-orange-400 border border-orange-500/40 px-3 py-1.5 rounded-lg hover:bg-orange-500/10">
+        <div className="mt-4 pt-3 border-t border-line">
+          <button onClick={() => setShowAddModal(true)} className="text-sm text-accent border border-accent/40 px-3 py-1.5 rounded-control hover:bg-accent/10">
             + Add Order Manually
           </button>
         </div>
@@ -158,7 +158,7 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
         router.refresh()
       }} reportId={report.id} statuses={statuses} clients={allClients} />
       <ConfirmModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} loading={deleting} title="Delete Order?"
-        message={<>Order <strong className="text-white font-mono">{deleteTarget?.order_id}</strong> will be permanently deleted.</>} />
+        message={<>Order <strong className="text-ink font-mono">{deleteTarget?.order_id}</strong> will be permanently deleted.</>} />
     </>
   )
 }

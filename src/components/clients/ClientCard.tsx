@@ -11,25 +11,25 @@ export function ClientCard({ client }: { client: ClientWithReports }) {
   return (
     <Link
       href={`/clients/${client.id}`}
-      className="block bg-gray-900 border border-gray-800 hover:border-orange-500 rounded-xl p-5 cursor-pointer transition-colors"
+      className="block bg-raised border border-line hover:border-accent rounded-card p-5 cursor-pointer transition-colors"
     >
-      <h3 className="text-white font-semibold text-lg mb-3">{client.name}</h3>
+      <h3 className="text-ink font-semibold text-lg mb-3">{client.name}</h3>
 
       {client.reports.length === 0 ? (
-        <p className="text-gray-500 text-sm">No orders yet</p>
+        <p className="text-muted text-sm">No orders yet</p>
       ) : (
         <div className="space-y-1.5">
           {visible.map((r) => (
             <div key={r.report_id} className="flex items-center justify-between text-sm">
-              <span className="text-gray-300 truncate pr-3">{r.report_name}</span>
+              <span className="text-muted truncate pr-3">{r.report_name}</span>
               <span className="flex gap-6 text-right whitespace-nowrap">
-                <span className="text-green-400 font-medium">{formatVND(r.commission)}</span>
-                <span className="text-orange-400 font-medium">{formatVND(r.return)}</span>
+                <span className="text-success font-medium">{formatVND(r.commission)}</span>
+                <span className="text-accent font-medium">{formatVND(r.return)}</span>
               </span>
             </div>
           ))}
           {extra > 0 && (
-            <p className="text-gray-500 text-xs pt-1">+{extra} more reports</p>
+            <p className="text-muted text-xs pt-1">+{extra} more reports</p>
           )}
         </div>
       )}

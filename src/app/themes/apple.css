@@ -1,0 +1,41 @@
+/* Apple theme — light, low-density. Default baseline. */
+:root,
+[data-theme="apple"] {
+  --surface-page: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f5f5f7;
+  --surface-inverse: #1d1d1f;
+
+  --ink-default: #1d1d1f;
+  --ink-muted: #7a7a7a;
+  --ink-on-accent: #ffffff;
+  --ink-on-inverse: #ffffff;
+
+  --accent: #0066cc;
+  --accent-hover: #0071e3;
+  --accent-on-dark: #2997ff;
+
+  --border-default: #e0e0e0;
+  --border-strong: #d2d2d7;
+
+  --status-success: #248a3d;
+  --status-danger: #d70015;
+  --status-warning: #b25000;
+
+  --rad-control: 8px;
+  --rad-card: 18px;
+  --rad-pill: 9999px;
+
+  --family-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --family-text: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --type-tracking-tight: -0.374px;
+  --type-tracking-body: -0.01em;
+
+  --gutter: 24px;
+  --pad-card: 24px;
+  --pad-row: 12px;
+  --space-section: 80px;
+
+  --elev-card: none; /* intentional: cards are flat, defined by hairline + surface */
+  --elev-product: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+}

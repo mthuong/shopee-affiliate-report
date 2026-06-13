@@ -14,16 +14,16 @@ export default async function ReportsPage() {
         <CreateReportButton />
       </div>
       {reports.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No reports yet. Create your first monthly report.</p>
+        <p className="text-muted text-center py-12">No reports yet. Create your first monthly report.</p>
       ) : (
         <div className="space-y-3">
           {reports.map((r) => <ReportCard key={r.id} report={r} />)}
         </div>
       )}
       {reports.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-gray-800 flex justify-between text-sm text-gray-400">
+        <div className="mt-6 pt-4 border-t border-line flex justify-between text-sm text-muted">
           <span>{reports.length} reports total</span>
-          <span className="text-green-400">All-time: {formatVND(allTimeTotal)}</span>
+          <span className="text-success">All-time: {formatVND(allTimeTotal)}</span>
         </div>
       )}
     </div>

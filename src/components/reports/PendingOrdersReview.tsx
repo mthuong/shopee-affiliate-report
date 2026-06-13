@@ -59,12 +59,12 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
   }
 
   return (
-    <div className="bg-gray-900 border border-orange-500/40 rounded-xl p-5">
+    <div className="bg-raised border border-accent/40 rounded-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-orange-400">📋 {orders.length} order{orders.length !== 1 ? 's' : ''} pending review</h3>
+        <h3 className="font-semibold text-accent">📋 {orders.length} order{orders.length !== 1 ? 's' : ''} pending review</h3>
         <div className="flex gap-2">
-          <button onClick={onDiscard} className="px-3 py-1.5 text-sm border border-gray-600 text-gray-300 rounded-lg hover:bg-gray-800">Discard</button>
-          <button onClick={handleSaveAll} disabled={saving || orders.length === 0} className="px-4 py-1.5 text-sm bg-orange-500 hover:bg-orange-400 text-white rounded-lg font-medium disabled:opacity-50">
+          <button onClick={onDiscard} className="px-3 py-1.5 text-sm border border-line-strong text-muted rounded-control hover:bg-sunken">Discard</button>
+          <button onClick={handleSaveAll} disabled={saving || orders.length === 0} className="px-4 py-1.5 text-sm bg-accent hover:bg-accent-hover text-on-accent rounded-control font-medium disabled:opacity-50">
             {saving ? 'Saving…' : 'Save All'}
           </button>
         </div>
@@ -72,7 +72,7 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-gray-400 border-b border-gray-700 text-left">
+            <tr className="text-muted border-b border-line-strong text-left">
               <th className="pb-2 pr-3">Order ID</th>
               <th className="pb-2 pr-3">Product</th>
               <th className="pb-2 pr-3">Date</th>
@@ -86,24 +86,24 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
               const isBlank = !o.status_name?.trim()
               const isUnknown = !isBlank && !statuses.some((s) => s.name === o.status_name)
               return (
-                <tr key={o._key} className="border-b border-gray-800/50">
+                <tr key={o._key} className="border-b border-line/50">
                   <td className="py-2 pr-3"><input value={o.order_id} onChange={(e) => onChange(o._key, 'order_id', e.target.value)} className="input text-xs w-36" /></td>
                   <td className="py-2 pr-3"><input value={o.product_name ?? ''} onChange={(e) => onChange(o._key, 'product_name', e.target.value)} className="input text-xs w-40" placeholder="—" /></td>
-                  <td className="py-2 pr-3 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
+                  <td className="py-2 pr-3 text-muted whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
                   <td className="py-2 pr-3">
                     <select
                       value={o.status_name ?? ''}
                       onChange={(e) => onChange(o._key, 'status_name', e.target.value)}
-                      className={`input text-xs ${isBlank || isUnknown ? 'border-red-500' : ''}`}
+                      className={`input text-xs ${isBlank || isUnknown ? 'border-danger' : ''}`}
                     >
                       {isBlank && <option value="" disabled>— Choose status —</option>}
                       {isUnknown && <option value={o.status_name}>{o.status_name} (unrecognized)</option>}
                       {statuses.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
                     </select>
                   </td>
-                  <td className="py-2 pr-3 text-right text-white">{formatVND(o.commission_vnd)}</td>
+                  <td className="py-2 pr-3 text-right text-ink">{formatVND(o.commission_vnd)}</td>
                   <td className="py-2 text-center">
-                    <button onClick={() => onRemove(o._key)} className="text-red-400 hover:text-red-300 text-xs p-1" title="Remove">✕</button>
+                    <button onClick={() => onRemove(o._key)} className="text-danger hover:opacity-80 text-xs p-1" title="Remove">✕</button>
                   </td>
                 </tr>
               )

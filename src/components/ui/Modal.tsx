@@ -23,7 +23,7 @@ export function Modal({ open, onClose, title, children }: Props) {
       className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md">
+      <div className="bg-raised text-ink border border-line-strong rounded-card p-6 w-full max-w-md">
         <h2 className="text-lg font-semibold mb-4">{title}</h2>
         {children}
       </div>

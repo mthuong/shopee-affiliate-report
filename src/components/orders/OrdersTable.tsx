@@ -65,14 +65,14 @@ export function OrdersTable({
     }
   }
 
-  if (orders.length === 0) return <p className="text-gray-500 text-sm py-4 text-center">No orders yet.</p>
+  if (orders.length === 0) return <p className="text-muted text-sm py-4 text-center">No orders yet.</p>
 
   return (
     <>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-gray-400 border-b border-gray-800 text-left">
+            <tr className="text-muted border-b border-line text-left">
               {selectMode && (
                 <th className="pb-2 pr-3 w-8">
                   <input
@@ -102,7 +102,7 @@ export function OrdersTable({
               return (
                 <tr
                   key={order.id}
-                  className={`group border-b border-gray-800/50 ${rowClickable ? 'hover:bg-gray-800/40 cursor-pointer' : ''} ${selectMode && !isUnassigned ? 'opacity-50' : ''}`}
+                  className={`group border-b border-line/50 ${rowClickable ? 'hover:bg-sunken/40 cursor-pointer' : ''} ${selectMode && !isUnassigned ? 'opacity-50' : ''}`}
                   onClick={rowClickable ? () => setEditOrder(order) : undefined}
                 >
                   {selectMode && (
@@ -117,15 +117,15 @@ export function OrdersTable({
                       ) : null}
                     </td>
                   )}
-                  <td className="py-3 pr-4 text-white font-mono text-xs">{order.order_id}</td>
-                  <td className="py-3 pr-4 text-gray-300 max-w-[180px] truncate">{order.product_name ?? '—'}</td>
-                  <td className="py-3 pr-4 text-gray-400 whitespace-nowrap">{formatOrderDate(order.ordered_at)}</td>
-                  <td className={`py-3 pr-4 ${order.order_statuses.name === 'Đã hoàn thành' ? 'text-green-400' : 'text-red-400'}`}>{order.order_statuses.name}</td>
-                  <td className="py-3 pr-4 text-right text-white">{formatVND(order.commission)}</td>
-                  <td className="py-3 pr-4 text-gray-400">{order.clients?.name ?? '—'}</td>
+                  <td className="py-3 pr-4 text-ink font-mono text-xs">{order.order_id}</td>
+                  <td className="py-3 pr-4 text-muted max-w-[180px] truncate">{order.product_name ?? '—'}</td>
+                  <td className="py-3 pr-4 text-muted whitespace-nowrap">{formatOrderDate(order.ordered_at)}</td>
+                  <td className={`py-3 pr-4 ${order.order_statuses.name === 'Đã hoàn thành' ? 'text-success' : 'text-danger'}`}>{order.order_statuses.name}</td>
+                  <td className="py-3 pr-4 text-right text-ink">{formatVND(order.commission)}</td>
+                  <td className="py-3 pr-4 text-muted">{order.clients?.name ?? '—'}</td>
                   {!selectMode && (
                     <td className="py-3 text-center">
-                      <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(order) }} className="invisible group-hover:visible text-red-400 hover:text-red-300 p-1" title="Delete">🗑</button>
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(order) }} className="invisible group-hover:visible text-danger hover:opacity-80 p-1" title="Delete">🗑</button>
                     </td>
                   )}
                 </tr>
@@ -136,7 +136,7 @@ export function OrdersTable({
       </div>
       {editOrder && <OrderModal open onClose={() => setEditOrder(null)} onSaved={(updated) => { onEditSuccess(updated); setEditOrder(null) }} reportId={reportId} statuses={statuses} clients={clients} order={editOrder} />}
       <ConfirmModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} loading={deleting} title="Delete Order?"
-        message={<>Order <strong className="text-white font-mono">{deleteTarget?.order_id}</strong> will be permanently deleted.</>} />
+        message={<>Order <strong className="text-ink font-mono">{deleteTarget?.order_id}</strong> will be permanently deleted.</>} />
     </>
   )
 }
