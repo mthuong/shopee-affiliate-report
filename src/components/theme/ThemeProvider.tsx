@@ -17,7 +17,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME)
 
   useEffect(() => {
+    // One-time hydration sync: adopt the theme the pre-paint inline script
+    // already wrote to <html data-theme>. Reading it here (not during render)
+    // is what avoids an SSR/CSR hydration mismatch, so the synchronous setState
+    // is intentional and runs at most once.
     const current = document.documentElement.getAttribute('data-theme')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isTheme(current)) setThemeState(current)
   }, [])
 

@@ -63,8 +63,8 @@ export function OrderModal({ open, onClose, onSaved, reportId, statuses, clients
         } as OrderWithStatus)
       }
       onClose()
-    } catch (e: any) {
-      showToast(e.message ?? 'Failed to save order', 'error')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Failed to save order', 'error')
     } finally {
       setSaving(false)
     }
