@@ -15,6 +15,11 @@ jest.mock('@/components/clients/ClientMonthSection', () => ({
   ),
 }))
 
+jest.mock('@/components/ui/Toast', () => ({
+  __esModule: true,
+  useToast: () => ({ showToast: jest.fn() }),
+}))
+
 import { getClientReportGroups } from '@/actions/clients'
 const mockGet = getClientReportGroups as jest.Mock
 
@@ -62,6 +67,38 @@ describe('ClientDetailClient pagination', () => {
 
     await waitFor(() => expect(screen.getAllByTestId('month-section')).toHaveLength(3))
     expect(mockGet).toHaveBeenCalledWith('c1', ['r1'])
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument()
+  })
+
+  it('does not crash and keeps the button when getClientReportGroups rejects', async () => {
+    mockGet.mockRejectedValue(new Error('network error'))
+    renderComponent()
+
+    fireEvent.click(screen.getByRole('button', { name: /load more/i }))
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /load more/i })).not.toBeDisabled()
+    )
+    // groups unchanged — still 2 sections
+    expect(screen.getAllByTestId('month-section')).toHaveLength(2)
+    // button still present because loadedUpTo did not advance
+    expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument()
+  })
+
+  it('renders empty state and no Load more button when reportList is empty', () => {
+    render(
+      <ClientDetailClient
+        client={client}
+        clientId="c1"
+        reportList={[]}
+        initialGroups={[]}
+        statuses={[]}
+        allClients={[]}
+        totalCommission={0}
+        totalReturn={0}
+      />
+    )
+    expect(screen.getByText('No orders assigned to this client yet.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument()
   })
 })

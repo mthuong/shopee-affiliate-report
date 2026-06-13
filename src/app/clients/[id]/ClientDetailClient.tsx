@@ -32,18 +32,18 @@ export function ClientDetailClient({
 }: Props) {
   const { showToast } = useToast()
   const [groups, setGroups] = useState<ReportGroup[]>(initialGroups)
+  const [loadedUpTo, setLoadedUpTo] = useState(initialGroups.length)
   const [loading, setLoading] = useState(false)
 
-  const hasMore = groups.length < reportList.length
+  const hasMore = loadedUpTo < reportList.length
 
   async function handleLoadMore() {
+    const nextIds = reportList.slice(loadedUpTo, loadedUpTo + PAGE_SIZE).map((r) => r.report_id)
     setLoading(true)
     try {
-      const nextIds = reportList
-        .slice(groups.length, groups.length + PAGE_SIZE)
-        .map((r) => r.report_id)
       const next = await getClientReportGroups(clientId, nextIds)
       setGroups((prev) => [...prev, ...next])
+      setLoadedUpTo((prev) => prev + nextIds.length) // advance by requested, not received
     } catch {
       showToast('Failed to load more reports', 'error')
     } finally {
@@ -87,7 +87,7 @@ export function ClientDetailClient({
                 disabled={loading}
                 className="px-4 py-2 text-sm border border-gray-700 text-gray-300 rounded-lg hover:bg-gray-800 disabled:opacity-50"
               >
-                {loading ? 'Loading…' : `Load more (${reportList.length - groups.length} left)`}
+                {loading ? 'Loading…' : `Load more (${reportList.length - loadedUpTo} left)`}
               </button>
             </div>
           )}
