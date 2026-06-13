@@ -64,3 +64,9 @@ export type ReportBreakdown = {
 export type ClientWithReports = Client & {
   reports: ReportBreakdown[]
 }
+
+export type ReportGroup = {
+  report: Report
+  orders: OrderWithStatus[]
+  commissionPercent: number
+}
