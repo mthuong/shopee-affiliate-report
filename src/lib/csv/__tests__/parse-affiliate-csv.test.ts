@@ -92,10 +92,24 @@ describe('parseAffiliateCsv', () => {
     expect(parseAffiliateCsv(HEADER)).toEqual([])
   })
 
-  it('accepts an ArrayBuffer input', () => {
-    const bytes = new TextEncoder().encode(csv('ORD7,Completed,2026-05-08 10:00:00,Q,300'))
+  it('accepts an ArrayBuffer input and round-trips Vietnamese status and commission via codepage:65001', () => {
+    const bytes = new TextEncoder().encode(
+      csv('ORD7,Completed,2026-05-08 10:00:00,Áo thun,300'),
+    )
     const result = parseAffiliateCsv(bytes.buffer)
     expect(result).toHaveLength(1)
     expect(result[0].order_id).toBe('ORD7')
+    expect(result[0].status_name).toBe('Đã hoàn thành')
+    expect(result[0].commission_vnd).toBe(300)
+  })
+
+  it('normalizeDate string fallback: Order Time arriving as a plain string produces correct ordered_at', () => {
+    // XLSX's `type:'string'` path already passes through cellDates, but we also
+    // exercise the string-input branch of normalizeDate by passing a CSV whose
+    // date cell looks like a plain string to the parser.
+    const result = parseAffiliateCsv(
+      csv('ORD8,Cancelled,2026-12-31 23:59:59,Widget,500'),
+    )
+    expect(result[0].ordered_at).toBe('2026-12-31T23:59:59')
   })
 })

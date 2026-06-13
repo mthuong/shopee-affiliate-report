@@ -41,14 +41,17 @@ function normalizeDate(value: unknown): string {
       `T${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`
     )
   }
-  // Fallback: plain string — replace space separator with T
-  return String(value ?? '').trim().replace(' ', 'T')
+  // Fallback: plain string — replace the single space between date and time with T
+  // Using a pattern anchored to a digit boundary ensures only the date/time
+  // separator is replaced (not any spaces that may appear elsewhere in the string).
+  return String(value ?? '').trim().replace(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/, '$1T$2')
 }
 
 export function parseAffiliateCsv(input: string | ArrayBuffer): ParsedOrder[] {
   const wb =
     typeof input === 'string'
-      ? XLSX.read(input, { type: 'string', cellDates: true })
+      ? // codepage is irrelevant here — the JS string is already decoded
+        XLSX.read(input, { type: 'string', cellDates: true })
       : XLSX.read(new Uint8Array(input), { type: 'array', cellDates: true, codepage: 65001 })
 
   const ws = wb.Sheets[wb.SheetNames[0]]
@@ -64,18 +67,18 @@ export function parseAffiliateCsv(input: string | ArrayBuffer): ParsedOrder[] {
   }
 
   const groups = new Map<string, Row[]>()
-  const order: string[] = []
+  const orderedIds: string[] = []
   for (const row of rows) {
     const id = String(row[COL.orderId] ?? '').trim()
     if (!id) continue
     if (!groups.has(id)) {
       groups.set(id, [])
-      order.push(id)
+      orderedIds.push(id)
     }
     groups.get(id)!.push(row)
   }
 
-  const result: ParsedOrder[] = order.map((id) => {
+  const result: ParsedOrder[] = orderedIds.map((id) => {
     const items = groups.get(id)!
     const commission_vnd = Math.round(
       items.reduce((sum, r) => sum + toNumber(r[COL.commission]), 0),
