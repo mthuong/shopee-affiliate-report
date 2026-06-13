@@ -82,27 +82,32 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
             </tr>
           </thead>
           <tbody>
-            {orders.map((o) => (
-              <tr key={o._key} className="border-b border-gray-800/50">
-                <td className="py-2 pr-3"><input value={o.order_id} onChange={(e) => onChange(o._key, 'order_id', e.target.value)} className="input text-xs w-36" /></td>
-                <td className="py-2 pr-3"><input value={o.product_name ?? ''} onChange={(e) => onChange(o._key, 'product_name', e.target.value)} className="input text-xs w-40" placeholder="—" /></td>
-                <td className="py-2 pr-3 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
-                <td className="py-2 pr-3">
-                  <select
-                    value={o.status_name ?? ''}
-                    onChange={(e) => onChange(o._key, 'status_name', e.target.value)}
-                    className={`input text-xs ${!o.status_name?.trim() ? 'border-red-500' : ''}`}
-                  >
-                    {!o.status_name?.trim() && <option value="" disabled>— Choose status —</option>}
-                    {statuses.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
-                  </select>
-                </td>
-                <td className="py-2 pr-3 text-right text-white">{formatVND(o.commission_vnd)}</td>
-                <td className="py-2 text-center">
-                  <button onClick={() => onRemove(o._key)} className="text-red-400 hover:text-red-300 text-xs p-1" title="Remove">✕</button>
-                </td>
-              </tr>
-            ))}
+            {orders.map((o) => {
+              const isBlank = !o.status_name?.trim()
+              const isUnknown = !isBlank && !statuses.some((s) => s.name === o.status_name)
+              return (
+                <tr key={o._key} className="border-b border-gray-800/50">
+                  <td className="py-2 pr-3"><input value={o.order_id} onChange={(e) => onChange(o._key, 'order_id', e.target.value)} className="input text-xs w-36" /></td>
+                  <td className="py-2 pr-3"><input value={o.product_name ?? ''} onChange={(e) => onChange(o._key, 'product_name', e.target.value)} className="input text-xs w-40" placeholder="—" /></td>
+                  <td className="py-2 pr-3 text-gray-400 whitespace-nowrap text-xs">{formatOrderDate(o.ordered_at)}</td>
+                  <td className="py-2 pr-3">
+                    <select
+                      value={o.status_name ?? ''}
+                      onChange={(e) => onChange(o._key, 'status_name', e.target.value)}
+                      className={`input text-xs ${isBlank || isUnknown ? 'border-red-500' : ''}`}
+                    >
+                      {isBlank && <option value="" disabled>— Choose status —</option>}
+                      {isUnknown && <option value={o.status_name}>{o.status_name} (unrecognized)</option>}
+                      {statuses.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+                    </select>
+                  </td>
+                  <td className="py-2 pr-3 text-right text-white">{formatVND(o.commission_vnd)}</td>
+                  <td className="py-2 text-center">
+                    <button onClick={() => onRemove(o._key)} className="text-red-400 hover:text-red-300 text-xs p-1" title="Remove">✕</button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

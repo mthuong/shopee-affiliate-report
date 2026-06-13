@@ -88,6 +88,12 @@ describe('parseAffiliateCsv', () => {
     expect(() => parseAffiliateCsv(wrong)).toThrow(/Shopee affiliate commission CSV/)
   })
 
+  it('throws when given a file with no recognizable headers even if it has 0 data rows', () => {
+    // A wrong/header-only file with wrong column names should throw even with no data rows
+    expect(() => parseAffiliateCsv('garbage\n')).toThrow(/Shopee affiliate commission CSV/)
+    expect(() => parseAffiliateCsv('Foo,Bar\n')).toThrow(/Shopee affiliate commission CSV/)
+  })
+
   it('returns an empty array for a header-only file', () => {
     expect(parseAffiliateCsv(HEADER)).toEqual([])
   })

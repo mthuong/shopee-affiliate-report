@@ -55,30 +55,35 @@ export function parseAffiliateCsv(input: string | ArrayBuffer): ParsedOrder[] {
       : XLSX.read(new Uint8Array(input), { type: 'array', cellDates: true, codepage: 65001 })
 
   const ws = wb.Sheets[wb.SheetNames[0]]
-  // raw: true preserves numeric commission values and Date objects from cellDates
-  const rows = XLSX.utils.sheet_to_json<Row>(ws, { defval: '', raw: true })
+  if (!ws) {
+    throw new Error("This doesn't look like a Shopee affiliate commission CSV.")
+  }
 
-  if (rows.length === 0) return []
-
-  const headers = Object.keys(rows[0])
+  // Read the header row independently so we can validate it even when there
+  // are no data rows (e.g. a header-only file or a completely wrong file).
+  const rawRows = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, blankrows: false })
+  const headers = (rawRows[0] ?? []) as unknown[]
   const missing = REQUIRED_HEADERS.filter((h) => !headers.includes(h))
   if (missing.length > 0) {
     throw new Error("This doesn't look like a Shopee affiliate commission CSV.")
   }
 
+  // raw: true preserves numeric commission values and Date objects from cellDates
+  const rows = XLSX.utils.sheet_to_json<Row>(ws, { defval: '', raw: true })
+
+  if (rows.length === 0) return []
+
   const groups = new Map<string, Row[]>()
-  const orderedIds: string[] = []
   for (const row of rows) {
     const id = String(row[COL.orderId] ?? '').trim()
     if (!id) continue
     if (!groups.has(id)) {
       groups.set(id, [])
-      orderedIds.push(id)
     }
     groups.get(id)!.push(row)
   }
 
-  const result: ParsedOrder[] = orderedIds.map((id) => {
+  const result: ParsedOrder[] = [...groups.keys()].map((id) => {
     const items = groups.get(id)!
     const commission_vnd = Math.round(
       items.reduce((sum, r) => sum + toNumber(r[COL.commission]), 0),
