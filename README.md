@@ -9,6 +9,7 @@ Track Shopee affiliate commissions: import orders from screenshots via Gemini AI
 ## Prerequisites
 
 - Node.js 18+
+- [pnpm](https://pnpm.io) 9+
 - A [Supabase](https://supabase.com) project
 - A [Gemini API key](https://aistudio.google.com/) (free tier works)
 
@@ -19,7 +20,7 @@ Track Shopee affiliate commissions: import orders from screenshots via Gemini AI
 ### 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Set up environment variables
@@ -60,7 +61,7 @@ supabase db push
 ### 4. Run the dev server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -68,7 +69,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ### 5. Run tests
 
 ```bash
-npm test
+pnpm exec jest
 ```
 
 ---
