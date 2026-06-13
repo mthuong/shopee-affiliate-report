@@ -1,0 +1,40 @@
+/* Classic theme — current dark / orange Shopee look. */
+[data-theme="classic"] {
+  --surface-page: #030712;
+  --surface-raised: #111827;
+  --surface-sunken: #1f2937;
+  --surface-inverse: #f3f4f6;
+
+  --ink-default: #f3f4f6;
+  --ink-muted: #9ca3af;
+  --ink-on-accent: #ffffff;
+  --ink-on-inverse: #111827;
+
+  --accent: #fb923c;
+  --accent-hover: #fdba74;
+  --accent-on-dark: #fb923c; /* same as --accent: theme is already dark */
+
+  --border-default: #1f2937;
+  --border-strong: #374151;
+
+  --status-success: #15803d;
+  --status-danger: #b91c1c;
+  --status-warning: #b45309;
+
+  --rad-control: 8px;
+  --rad-card: 12px;
+  --rad-pill: 9999px;
+
+  --family-display: "Inter", system-ui, sans-serif;
+  --family-text: "Inter", system-ui, sans-serif;
+  --type-tracking-tight: 0px;
+  --type-tracking-body: 0px;
+
+  --gutter: 16px;
+  --pad-card: 16px;
+  --pad-row: 8px;
+  --space-section: 32px;
+
+  --elev-card: none; /* intentional: cards are flat, defined by border + surface */
+  --elev-product: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
