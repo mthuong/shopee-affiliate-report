@@ -86,8 +86,16 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
   return (
     <>
       <div className="border border-gray-800 rounded-xl p-5 mb-4">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <h3 className="font-semibold text-orange-400 text-lg">{report.name}</h3>
+        <div className="flex items-start justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <h3 className="font-semibold text-orange-400 text-lg">{report.name}</h3>
+            <div className="text-sm mt-1">
+              <span className="text-gray-400">Subtotal: </span>
+              <span className="text-white">{formatVND(subtotal)}</span>
+              <span className="text-gray-500"> → Return: </span>
+              <span className="text-green-400 font-semibold">{formatVND(totalReturn)}</span>
+            </div>
+          </div>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-gray-400 text-sm">Commission %:</span>
             <input type="number" min={0} max={100} value={percentInput} onChange={(e) => setPercentInput(e.target.value)} className="input w-20 text-center" />
@@ -129,16 +137,10 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
           </table>
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-800 flex-wrap gap-2">
+        <div className="mt-4 pt-3 border-t border-gray-800">
           <button onClick={() => setShowAddModal(true)} className="text-sm text-orange-400 border border-orange-500/40 px-3 py-1.5 rounded-lg hover:bg-orange-500/10">
             + Add Order Manually
           </button>
-          <div className="text-right text-sm">
-            <span className="text-gray-400">Subtotal: </span>
-            <span className="text-white">{formatVND(subtotal)}</span>
-            <span className="text-gray-500"> → Return: </span>
-            <span className="text-green-400 font-semibold">{formatVND(totalReturn)}</span>
-          </div>
         </div>
       </div>
 

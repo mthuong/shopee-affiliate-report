@@ -1,24 +1,38 @@
 import Link from 'next/link'
 import { formatVND } from '@/lib/utils/currency'
-import type { ClientWithTotals } from '@/lib/supabase/types'
+import type { ClientWithReports } from '@/lib/supabase/types'
 
-export function ClientCard({ client }: { client: ClientWithTotals }) {
+const MAX_ROWS = 3
+
+export function ClientCard({ client }: { client: ClientWithReports }) {
+  const visible = client.reports.slice(0, MAX_ROWS)
+  const extra = client.reports.length - visible.length
+
   return (
     <Link
       href={`/clients/${client.id}`}
-      className="bg-gray-900 border border-gray-800 hover:border-orange-500 rounded-xl p-5 flex items-center justify-between cursor-pointer transition-colors"
+      className="block bg-gray-900 border border-gray-800 hover:border-orange-500 rounded-xl p-5 cursor-pointer transition-colors"
     >
-      <h3 className="text-white font-semibold text-lg">{client.name}</h3>
-      <div className="flex gap-8 text-right">
-        <div>
-          <p className="text-xs text-gray-500 mb-0.5">Total Commission</p>
-          <p className="text-green-400 font-semibold">{formatVND(client.total_commission)}</p>
+      <h3 className="text-white font-semibold text-lg mb-3">{client.name}</h3>
+
+      {client.reports.length === 0 ? (
+        <p className="text-gray-500 text-sm">No orders yet</p>
+      ) : (
+        <div className="space-y-1.5">
+          {visible.map((r) => (
+            <div key={r.report_id} className="flex items-center justify-between text-sm">
+              <span className="text-gray-300 truncate pr-3">{r.report_name}</span>
+              <span className="flex gap-6 text-right whitespace-nowrap">
+                <span className="text-green-400 font-medium">{formatVND(r.commission)}</span>
+                <span className="text-orange-400 font-medium">{formatVND(r.return)}</span>
+              </span>
+            </div>
+          ))}
+          {extra > 0 && (
+            <p className="text-gray-500 text-xs pt-1">+{extra} more reports</p>
+          )}
         </div>
-        <div>
-          <p className="text-xs text-gray-500 mb-0.5">Total Return</p>
-          <p className="text-orange-400 font-semibold">{formatVND(client.total_return)}</p>
-        </div>
-      </div>
+      )}
     </Link>
   )
 }

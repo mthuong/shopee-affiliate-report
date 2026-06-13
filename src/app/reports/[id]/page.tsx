@@ -2,22 +2,20 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getReport } from '@/actions/reports'
 import { getOrdersByReport, getOrderStatuses } from '@/actions/orders'
-import { getClients } from '@/actions/clients'
+import { getClientsBasic } from '@/actions/clients'
 import { ReportDetailClient } from './ReportDetailClient'
 import { RenameReportButton } from '@/components/reports/RenameReportButton'
 
 export default async function ReportDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const [report, orders, statuses, clientsData] = await Promise.all([
+  const [report, orders, statuses, clients] = await Promise.all([
     getReport(id),
     getOrdersByReport(id),
     getOrderStatuses(),
-    getClients(),
+    getClientsBasic(),
   ])
 
   if (!report) notFound()
-
-  const clients = clientsData.map(({ id, name, created_at }) => ({ id, name, created_at }))
 
   return (
     <div>
