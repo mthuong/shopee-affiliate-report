@@ -125,9 +125,9 @@ export function ImageCropper({
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-gray-950 border border-gray-800 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        <header className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-          <h3 className="text-sm font-semibold text-gray-200">
+      <div className="bg-page border border-line rounded-card max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <header className="flex items-center justify-between px-4 py-3 border-b border-line">
+          <h3 className="text-sm font-semibold text-ink">
             Crop image {currentIndex} of {totalCount} — drag to select the order area
           </h3>
           <button
@@ -135,7 +135,7 @@ export function ImageCropper({
             aria-label="Close cropper"
             onClick={onClose}
             disabled={busy}
-            className="text-gray-400 hover:text-gray-200 disabled:opacity-40 px-2"
+            className="text-muted hover:text-ink disabled:opacity-40 px-2"
           >
             ×
           </button>
@@ -160,12 +160,12 @@ export function ImageCropper({
             </ReactCrop>
           )}
         </div>
-        <footer className="flex items-center justify-between gap-2 px-4 py-3 border-t border-gray-800">
+        <footer className="flex items-center justify-between gap-2 px-4 py-3 border-t border-line">
           <button
             type="button"
             onClick={onRemove}
             disabled={busy}
-            className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40 px-3 py-1.5 rounded"
+            className="text-xs text-danger hover:text-danger disabled:opacity-40 px-3 py-1.5 rounded"
           >
             Remove
           </button>
@@ -174,7 +174,7 @@ export function ImageCropper({
               type="button"
               onClick={handleUseFullImage}
               disabled={busy}
-              className="text-xs text-gray-300 hover:text-gray-100 border border-gray-700 px-3 py-1.5 rounded disabled:opacity-40"
+              className="text-xs text-muted hover:text-ink border border-line-strong px-3 py-1.5 rounded disabled:opacity-40"
             >
               Use full image
             </button>
@@ -182,7 +182,7 @@ export function ImageCropper({
               type="button"
               onClick={handleConfirm}
               disabled={busy || !completedCrop || completedCrop.width < MIN_CROP_SIDE || completedCrop.height < MIN_CROP_SIDE}
-              className="text-xs text-white bg-orange-600 hover:bg-orange-500 px-3 py-1.5 rounded disabled:opacity-40"
+              className="text-xs text-on-accent bg-accent hover:bg-accent-hover px-3 py-1.5 rounded disabled:opacity-40"
             >
               {busy ? 'Working…' : 'Confirm crop'}
             </button>

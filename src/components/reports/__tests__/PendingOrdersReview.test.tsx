@@ -51,7 +51,7 @@ describe('PendingOrdersReview', () => {
       />
     )
     const select = screen.getByRole('combobox')
-    expect(select.className).not.toMatch(/border-red-500/)
+    expect(select.className).not.toMatch(/border-danger/)
     expect(screen.queryByText(/unrecognized/i)).not.toBeInTheDocument()
   })
 
@@ -63,7 +63,7 @@ describe('PendingOrdersReview', () => {
       />
     )
     const select = screen.getByRole('combobox')
-    expect(select.className).toMatch(/border-red-500/)
+    expect(select.className).toMatch(/border-danger/)
     expect(screen.getByText('— Choose status —')).toBeInTheDocument()
   })
 
@@ -76,7 +76,7 @@ describe('PendingOrdersReview', () => {
     )
     const select = screen.getByRole('combobox')
     // Red border should be present
-    expect(select.className).toMatch(/border-red-500/)
+    expect(select.className).toMatch(/border-danger/)
     // An option labelled "<value> (unrecognized)" should be rendered
     expect(screen.getByText('Pending (unrecognized)')).toBeInTheDocument()
   })

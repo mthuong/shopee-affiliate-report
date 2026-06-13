@@ -186,17 +186,17 @@ export function UploadQueue({ items, onUpdate, onRemove, onClearAll, onParsed }:
   const cropIndex = cropTarget ? cropProcessedInBatch + 1 : 0
 
   return (
-    <div className="mt-4 border border-gray-800 rounded-xl p-4">
+    <div className="mt-4 border border-line rounded-card p-4">
       <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
-        <h3 className="font-semibold text-gray-200 text-sm">
+        <h3 className="font-semibold text-ink text-sm">
           Upload queue — {doneCount} parsed{failedCount > 0 ? `, ${failedCount} failed` : ''}{!allDone ? `, ${activeCount} pending` : ''}
         </h3>
-        <button onClick={onClearAll} className="text-xs text-gray-500 hover:text-gray-300">Clear all</button>
+        <button onClick={onClearAll} className="text-xs text-muted hover:text-ink">Clear all</button>
       </div>
       {allExhausted ? (
-        <p className="text-[11px] text-red-400 mb-3">⚠ All Gemini models exhausted today — try again after midnight UTC</p>
+        <p className="text-[11px] text-danger mb-3">⚠ All Gemini models exhausted today — try again after midnight UTC</p>
       ) : (
-        <p className="text-[11px] text-gray-500 mb-3">
+        <p className="text-[11px] text-muted mb-3">
           {availableCount} of {MODEL_PREFERENCE.length} models available
         </p>
       )}
@@ -261,26 +261,26 @@ function QueueRow({
 }) {
   const thumb = item.croppedPreviewUrl ?? item.previewUrl
   return (
-    <div className="flex items-center gap-3 bg-gray-900/40 rounded-lg p-2">
+    <div className="flex items-center gap-3 bg-raised/40 rounded-control p-2">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={thumb} alt="" className="w-12 h-12 object-cover rounded border border-gray-800 flex-shrink-0" />
+      <img src={thumb} alt="" className="w-12 h-12 object-cover rounded border border-line flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-300 truncate">{item.file.name}</p>
-        <p className="text-[11px] text-gray-500">{(item.file.size / 1024).toFixed(0)} KB</p>
+        <p className="text-xs text-muted truncate">{item.file.name}</p>
+        <p className="text-[11px] text-muted">{(item.file.size / 1024).toFixed(0)} KB</p>
         {item.status === 'failed' && item.error && (
-          <p className="text-[11px] text-red-400 mt-0.5 break-words" title={item.error}>{item.error}</p>
+          <p className="text-[11px] text-danger mt-0.5 break-words" title={item.error}>{item.error}</p>
         )}
       </div>
       <StatusBadge item={item} />
       <div className="flex items-center gap-1">
         {item.status === 'needs-crop' && (
-          <button onClick={onCrop} className="text-xs text-orange-400 hover:text-orange-300 px-2 py-1 rounded">Crop</button>
+          <button onClick={onCrop} className="text-xs text-accent hover:text-accent px-2 py-1 rounded">Crop</button>
         )}
         {item.status === 'failed' && (
-          <button onClick={onRetry} className="text-xs text-orange-400 hover:text-orange-300 px-2 py-1 rounded">Retry</button>
+          <button onClick={onRetry} className="text-xs text-accent hover:text-accent px-2 py-1 rounded">Retry</button>
         )}
         {item.status !== 'parsing' && item.status !== 'throttled' && (
-          <button onClick={onRemove} className="text-xs text-gray-500 hover:text-red-400 px-2 py-1" title="Remove">✕</button>
+          <button onClick={onRemove} className="text-xs text-muted hover:text-danger px-2 py-1" title="Remove">✕</button>
         )}
       </div>
     </div>
@@ -290,23 +290,23 @@ function QueueRow({
 function StatusBadge({ item }: { item: QueueItem }) {
   switch (item.status) {
     case 'needs-crop':
-      return <span className="text-xs text-orange-300">✂ Needs crop</span>
+      return <span className="text-xs text-accent">✂ Needs crop</span>
     case 'queued':
-      return <span className="text-xs text-gray-500">⏳ Queued</span>
+      return <span className="text-xs text-muted">⏳ Queued</span>
     case 'throttled':
-      return <span className="text-xs text-gray-400 animate-pulse" title="Waiting for rate limit">⏱ Waiting…</span>
+      return <span className="text-xs text-muted animate-pulse" title="Waiting for rate limit">⏱ Waiting…</span>
     case 'parsing':
-      return <span className="text-xs text-orange-400 animate-pulse">⚡ Parsing…</span>
+      return <span className="text-xs text-accent animate-pulse">⚡ Parsing…</span>
     case 'done': {
       const suffix = item.model ? ` · ${modelShortName(item.model)}` : ''
       const title = item.model ? `Parsed by ${item.model}` : undefined
       return (
-        <span className="text-xs text-green-400" title={title}>
+        <span className="text-xs text-success" title={title}>
           ✓ {item.orders.length} order{item.orders.length === 1 ? '' : 's'}{suffix}
         </span>
       )
     }
     case 'failed':
-      return <span className="text-xs text-red-400" title={item.error ?? ''}>✗ Failed</span>
+      return <span className="text-xs text-danger" title={item.error ?? ''}>✗ Failed</span>
   }
 }

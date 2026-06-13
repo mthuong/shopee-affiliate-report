@@ -7,7 +7,7 @@ export function CreateReportButton() {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button onClick={() => setOpen(true)} className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-white rounded-lg font-medium text-sm">
+      <button onClick={() => setOpen(true)} className="px-4 py-2 bg-accent hover:bg-accent-hover text-on-accent rounded-control font-medium text-sm">
         + New Report
       </button>
       <CreateReportModal open={open} onClose={() => setOpen(false)} />

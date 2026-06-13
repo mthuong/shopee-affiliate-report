@@ -20,8 +20,8 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm">← Reports</Link>
-        <span className="text-gray-700">/</span>
+        <Link href="/" className="text-muted hover:text-ink text-sm">← Reports</Link>
+        <span className="text-muted">/</span>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">{report.name}</h1>
           <RenameReportButton report={report} />

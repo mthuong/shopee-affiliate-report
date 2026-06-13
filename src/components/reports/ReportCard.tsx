@@ -32,20 +32,20 @@ export function ReportCard({ report }: { report: ReportWithStats }) {
   return (
     <>
       <div
-        className="group bg-gray-900 border border-gray-800 hover:border-orange-500 rounded-xl p-5 flex items-center justify-between cursor-pointer transition-colors"
+        className="group bg-raised border border-line hover:border-accent rounded-card p-5 flex items-center justify-between cursor-pointer transition-colors"
         onClick={() => router.push(`/reports/${report.id}`)}
       >
         <div>
-          <h3 className="text-white font-semibold text-lg">{report.name}</h3>
-          <p className="text-gray-400 text-sm mt-1">{report.order_count} orders</p>
+          <h3 className="text-ink font-semibold text-lg">{report.name}</h3>
+          <p className="text-muted text-sm mt-1">{report.order_count} orders</p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-green-400 font-semibold text-lg">{formatVND(report.total_commission)}</span>
+          <span className="text-success font-semibold text-lg">{formatVND(report.total_commission)}</span>
           <div className="hidden group-hover:flex gap-2">
-            <button onClick={(e) => { e.stopPropagation(); setShowRename(true) }} className="px-3 py-1.5 text-sm border border-orange-500 text-orange-400 rounded-lg hover:bg-orange-500/10">
+            <button onClick={(e) => { e.stopPropagation(); setShowRename(true) }} className="px-3 py-1.5 text-sm border border-accent text-accent rounded-control hover:bg-accent/10">
               ✏️ Rename
             </button>
-            <button onClick={(e) => { e.stopPropagation(); setShowDelete(true) }} className="px-3 py-1.5 text-sm border border-red-500 text-red-400 rounded-lg hover:bg-red-500/10">
+            <button onClick={(e) => { e.stopPropagation(); setShowDelete(true) }} className="px-3 py-1.5 text-sm border border-danger text-danger rounded-control hover:bg-danger/10">
               🗑 Delete
             </button>
           </div>
@@ -58,7 +58,7 @@ export function ReportCard({ report }: { report: ReportWithStats }) {
         onConfirm={handleDelete}
         loading={deleting}
         title="Delete Report?"
-        message={<>Deleting <strong className="text-white">{report.name}</strong> will permanently remove all <strong className="text-white">{report.order_count}</strong> orders. This cannot be undone.</>}
+        message={<>Deleting <strong className="text-ink">{report.name}</strong> will permanently remove all <strong className="text-ink">{report.order_count}</strong> orders. This cannot be undone.</>}
         confirmLabel="Yes, Delete Report"
       />
     </>

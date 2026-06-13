@@ -34,7 +34,7 @@ export function CsvUploader({ onParsed }: Props) {
   }
 
   return (
-    <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 text-center">
+    <div className="border-2 border-dashed border-line-strong rounded-card p-6 text-center">
       <input
         ref={inputRef}
         data-testid="csv-input"
@@ -45,15 +45,15 @@ export function CsvUploader({ onParsed }: Props) {
       />
       <button
         onClick={() => inputRef.current?.click()}
-        className="text-sm text-orange-400 border border-orange-500/40 px-4 py-2 rounded-lg hover:bg-orange-500/10"
+        className="text-sm text-accent border border-accent/40 px-4 py-2 rounded-control hover:bg-accent/10"
       >
         📄 Import from CSV
       </button>
-      <p className="text-gray-600 text-xs mt-2">
+      <p className="text-muted text-xs mt-2">
         Upload the Affiliate Commission Report CSV exported from Shopee.
       </p>
-      {message && <p className="text-green-400 text-xs mt-2">{message}</p>}
-      {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+      {message && <p className="text-success text-xs mt-2">{message}</p>}
+      {error && <p className="text-danger text-xs mt-2">{error}</p>}
     </div>
   )
 }

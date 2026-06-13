@@ -204,11 +204,11 @@ export function ReportDetailClient({ reportId, initialOrders, statuses, clients 
 
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-gray-200">Orders</h2>
+          <h2 className="font-semibold text-ink">Orders</h2>
           {!inSelectMode && (
             <div className="flex gap-2">
               <AssignClientButton disabled={numUnassigned === 0} onClick={handleAssignClick} />
-              <button onClick={() => setShowAddModal(true)} className="text-sm text-orange-400 border border-orange-500/40 px-3 py-1.5 rounded-lg hover:bg-orange-500/10">
+              <button onClick={() => setShowAddModal(true)} className="text-sm text-accent border border-accent/40 px-3 py-1.5 rounded-control hover:bg-accent/10">
                 + Add Manually
               </button>
             </div>
