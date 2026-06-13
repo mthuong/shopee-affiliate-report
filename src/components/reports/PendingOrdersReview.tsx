@@ -103,7 +103,7 @@ export function PendingOrdersReview({ reportId, orders, statuses, onChange, onRe
                   </td>
                   <td className="py-2 pr-3 text-right text-ink">{formatVND(o.commission_vnd)}</td>
                   <td className="py-2 text-center">
-                    <button onClick={() => onRemove(o._key)} className="text-danger hover:text-danger text-xs p-1" title="Remove">✕</button>
+                    <button onClick={() => onRemove(o._key)} className="text-danger hover:opacity-80 text-xs p-1" title="Remove">✕</button>
                   </td>
                 </tr>
               )

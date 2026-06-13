@@ -274,10 +274,10 @@ function QueueRow({
       <StatusBadge item={item} />
       <div className="flex items-center gap-1">
         {item.status === 'needs-crop' && (
-          <button onClick={onCrop} className="text-xs text-accent hover:text-accent px-2 py-1 rounded">Crop</button>
+          <button onClick={onCrop} className="text-xs text-accent hover:opacity-80 px-2 py-1 rounded">Crop</button>
         )}
         {item.status === 'failed' && (
-          <button onClick={onRetry} className="text-xs text-accent hover:text-accent px-2 py-1 rounded">Retry</button>
+          <button onClick={onRetry} className="text-xs text-accent hover:opacity-80 px-2 py-1 rounded">Retry</button>
         )}
         {item.status !== 'parsing' && item.status !== 'throttled' && (
           <button onClick={onRemove} className="text-xs text-muted hover:text-danger px-2 py-1" title="Remove">✕</button>

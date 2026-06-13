@@ -99,10 +99,10 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-muted text-sm">Commission %:</span>
             <input type="number" min={0} max={100} value={percentInput} onChange={(e) => setPercentInput(e.target.value)} className="input w-20 text-center" />
-            <button onClick={handleSavePercent} disabled={savingPercent} className="px-3 py-1.5 text-sm bg-sunken hover:bg-sunken text-ink rounded-control disabled:opacity-50">
+            <button onClick={handleSavePercent} disabled={savingPercent} className="px-3 py-1.5 text-sm bg-sunken hover:opacity-90 text-ink rounded-control disabled:opacity-50">
               {savingPercent ? '…' : 'Save'}
             </button>
-            <button onClick={handleExport} className="px-3 py-1.5 text-sm bg-success hover:bg-success text-on-accent rounded-control">📥 Export</button>
+            <button onClick={handleExport} className="px-3 py-1.5 text-sm bg-success hover:opacity-90 text-on-accent rounded-control">📥 Export</button>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ export function ClientMonthSection({ report, client, initialOrders, initialPerce
                   <td className={`py-3 pr-4 text-xs ${o.status_id === COMPLETED_STATUS_ID ? 'text-success' : 'text-danger'}`}>{o.order_statuses.name}</td>
                   <td className="py-3 pr-4 text-right text-ink">{formatVND(o.commission)}</td>
                   <td className="py-3 text-center">
-                    <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(o) }} className="invisible group-hover:visible text-danger hover:text-danger p-1">🗑</button>
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(o) }} className="invisible group-hover:visible text-danger hover:opacity-80 p-1">🗑</button>
                   </td>
                 </tr>
               ))}

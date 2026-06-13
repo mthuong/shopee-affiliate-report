@@ -125,7 +125,7 @@ export function OrdersTable({
                   <td className="py-3 pr-4 text-muted">{order.clients?.name ?? '—'}</td>
                   {!selectMode && (
                     <td className="py-3 text-center">
-                      <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(order) }} className="invisible group-hover:visible text-danger hover:text-danger p-1" title="Delete">🗑</button>
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(order) }} className="invisible group-hover:visible text-danger hover:opacity-80 p-1" title="Delete">🗑</button>
                     </td>
                   )}
                 </tr>

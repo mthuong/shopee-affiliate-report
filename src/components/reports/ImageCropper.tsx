@@ -165,7 +165,7 @@ export function ImageCropper({
             type="button"
             onClick={onRemove}
             disabled={busy}
-            className="text-xs text-danger hover:text-danger disabled:opacity-40 px-3 py-1.5 rounded"
+            className="text-xs text-danger hover:opacity-80 disabled:opacity-40 px-3 py-1.5 rounded"
           >
             Remove
           </button>
