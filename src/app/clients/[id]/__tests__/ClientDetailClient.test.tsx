@@ -98,7 +98,7 @@ describe('ClientDetailClient pagination', () => {
         totalReturn={0}
       />
     )
-    expect(screen.getByText('No orders assigned to this client yet.')).toBeInTheDocument()
+    expect(screen.getByText('No completed orders for this client yet.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument()
   })
 })

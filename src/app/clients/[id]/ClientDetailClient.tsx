@@ -66,7 +66,7 @@ export function ClientDetailClient({
       </div>
 
       {reportList.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No orders assigned to this client yet.</p>
+        <p className="text-gray-500 text-center py-12">No completed orders for this client yet.</p>
       ) : (
         <>
           {groups.map(({ report, orders, commissionPercent }) => (
