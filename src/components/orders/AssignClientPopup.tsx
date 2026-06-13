@@ -30,7 +30,7 @@ export function AssignClientPopup({ open, clients, onConfirm, onCancel }: Props)
     <Modal open={open} onClose={handleCancel} title="Assign Client">
       <div className="space-y-3">
         <div>
-          <label htmlFor="assign-client-select" className="block text-xs text-gray-400 mb-1">Client</label>
+          <label htmlFor="assign-client-select" className="block text-xs text-muted mb-1">Client</label>
           <select
             id="assign-client-select"
             value={selectedId}
@@ -45,11 +45,11 @@ export function AssignClientPopup({ open, clients, onConfirm, onCancel }: Props)
         </div>
       </div>
       <div className="flex justify-end gap-3 mt-5">
-        <button onClick={handleCancel} className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
+        <button onClick={handleCancel} className="px-4 py-2 rounded-control border border-line-strong text-muted hover:bg-sunken">Cancel</button>
         <button
           onClick={handleConfirm}
           disabled={!selectedId}
-          className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white font-medium disabled:opacity-50"
+          className="px-4 py-2 rounded-control bg-accent hover:bg-accent-hover text-on-accent font-medium disabled:opacity-50"
         >
           Continue
         </button>

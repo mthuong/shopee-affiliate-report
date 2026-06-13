@@ -10,7 +10,7 @@ export function AssignClientButton({ disabled, onClick }: Props) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="text-sm text-orange-400 border border-orange-500/40 px-3 py-1.5 rounded-lg hover:bg-orange-500/10 disabled:opacity-50"
+      className="text-sm text-accent border border-accent/40 px-3 py-1.5 rounded-control hover:bg-accent/10 disabled:opacity-50"
       title={disabled ? 'No unassigned orders to assign' : undefined}
     >
       Assign Client

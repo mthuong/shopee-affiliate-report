@@ -82,14 +82,14 @@ export function OrderModal({ open, onClose, onSaved, reportId, statuses, clients
           { label: 'Client', el: <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="input"><option value="">— Unassigned —</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select> },
         ].map(({ label, el }) => (
           <div key={label}>
-            <label className="block text-xs text-gray-400 mb-1">{label}</label>
+            <label className="block text-xs text-muted mb-1">{label}</label>
             {el}
           </div>
         ))}
       </div>
       <div className="flex justify-end gap-3 mt-5">
-        <button onClick={onClose} className="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
-        <button onClick={handleSave} disabled={saving || !orderId.trim()} className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-400 text-white font-medium disabled:opacity-50">
+        <button onClick={onClose} className="px-4 py-2 rounded-control border border-line-strong text-muted hover:bg-sunken">Cancel</button>
+        <button onClick={handleSave} disabled={saving || !orderId.trim()} className="px-4 py-2 rounded-control bg-accent hover:bg-accent-hover text-on-accent font-medium disabled:opacity-50">
           {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Order'}
         </button>
       </div>
